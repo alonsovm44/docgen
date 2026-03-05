@@ -1,0 +1,4 @@
+Track:
+    src/
+Ignore:
+    idea.md

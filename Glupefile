@@ -1,0 +1,9 @@
+project "docgen" {
+    target: "docgen"
+    sources: ["src/main.glp"]
+    backends: [
+        { name: "cpp", output: ".exe", binary: true, flags: "g++ %FILE$ -o docgen.exe std=c++17 " }
+    ]
+    default_backend: "cpp"
+    default_mode: "cloud"
+}
