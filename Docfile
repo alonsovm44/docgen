@@ -1,4 +1,8 @@
 Track:
+    # Example: *.cpp
+
+    src/main.cpp
     src/
 Ignore:
-    idea.md
+    # Example: secret.cpp
+    src/json.hpp
