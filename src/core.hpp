@@ -98,7 +98,7 @@ inline void cmd_config(int argc, char* argv[]) {
         config["cloud"]["protocol"] = value;
         std::ofstream o(CONFIG_FILE);
         o << config.dump(4);
-
+.\build
         std::cout << "Config updated: cloud.protocol = " << value << std::endl;
     } else {
         std::cerr << "Error: Unknown key '" << key << "'." << std::endl;
