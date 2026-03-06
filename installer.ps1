@@ -6,6 +6,17 @@ if (-not (Get-Command curl -ErrorAction SilentlyContinue)) {
     Write-Warning "curl not found. docgen requires curl to make API requests."
 }
 
+if (-not (Get-Command ollama -ErrorAction SilentlyContinue)) {
+    $install = Read-Host "Ollama not found. Do you want to install it? (y/n)"
+    if ($install -eq 'y') {
+        Write-Host "Downloading OllamaSetup.exe..."
+        $installerPath = "$env:TEMP\OllamaSetup.exe"
+        Invoke-WebRequest -Uri "https://ollama.com/download/OllamaSetup.exe" -OutFile $installerPath
+        Write-Host "Running installer..."
+        Start-Process -FilePath $installerPath
+    }
+}
+
 Write-Host "Compiling docgen..."
 
 if (Get-Command g++ -ErrorAction SilentlyContinue) {

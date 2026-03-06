@@ -3,7 +3,7 @@
 
 Docgen is a lightweight, C++ CLI tool that automates software documentation using Large Language Models (LLMs). It treats documentation generation as a build step, tracking your source code and incrementally updating documentation only when files change.
 
-## 🚀 Features
+## Features
 
 *   **Docs-as-Code**: Generates Markdown documentation that lives right next to your source code.
 *   **Smart Incremental Builds**: Uses content hashing to only regenerate docs for modified files, saving time and API credits.
@@ -13,8 +13,49 @@ Docgen is a lightweight, C++ CLI tool that automates software documentation usin
     *   **Local**: Works fully offline with Ollama (default).
 *   **Zero Dependencies**: Compiled as a single static binary.
 
-## 📦 Quick Install
+## Getting started
+Run 
+```bash
+docgen init
+```
+This creates your `Docfile` and your `.docgen` repo. Using the Docfile is easy. 
+Run `docgen track <path>` this adds the file/directory to your Docfile. 
+Then run `docgen update` to generate your tracked files documentation. Once generated only files with changes will be updated. 
+You can also run `docgen ignore` to indicate to Docgen which files or directories to ignore.
+
+**Example file**
+```Docfile
+Track:
+# This is a comment
+    main.cpp
+    src/
+Ignore:
+    src/secret.cpp
+```
+
+## Quick Install
 
 ### Windows (PowerShell)
 ```powershell
-.\installer.ps1
+irm https://raw.githubusercontent.com/alonsovm44/docgen/master/installer.ps1 | iex
+```
+### Linux / Mac
+```bash
+curl -fsSL https://raw.githubusercontent.com/alonsovm44/docgen/master/installer.sh | bash
+```
+
+## Other commands
+
+### Reboot
+Run this command to reset your documentation repository (asks for confirmation)
+```bash
+docgen reboot
+```
+### config
+Configure docgen with 
+```shell
+$ docgen config
+Usage: docgen config <key> <value>
+Keys: mode, protocol, key, model
+       docgen config see
+```
