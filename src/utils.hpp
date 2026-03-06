@@ -126,12 +126,22 @@ inline bool match_pattern(const fs::path& path, const std::string& pattern) {
 
 inline std::vector<std::string> extract_includes(const std::string& content) {
     std::vector<std::string> includes;
-    // Match #include "filename"
-    std::regex re(R"(#include\s*\"([^\"]+)\")");
+    // Regex to match:
+    // 1. #include or import with "filename" or <filename> (C/C++/Obj-C/etc.)
+    // 2. using Namespace; (C#)
+    // 3. from Module import ... (Python)
+    // 4. import Module (Python)
+    // 5. package Name; (Java) or package Name (Go)
+    std::regex re(R"((?:#\s*include|import)\s*[<"]([^>"]+)[>"]|using\s+([\w\.]+)\s*;|from\s+([\w\.]+)\s+import|import\s+([\w\.]+)|\bpackage\s+([\w\.]+)\s*;?)");
     std::smatch match;
     std::string::const_iterator searchStart(content.cbegin());
     while (std::regex_search(searchStart, content.cend(), match, re)) {
-        includes.push_back(match[1].str());
+        for (size_t i = 1; i < match.size(); ++i) {
+            if (match[i].matched) {
+                includes.push_back(match[i].str());
+                break;
+            }
+        }
         searchStart = match.suffix().first;
     }
     return includes;
