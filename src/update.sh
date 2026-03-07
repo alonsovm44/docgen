@@ -19,7 +19,7 @@ URL="https://github.com/alonsovm44/docgen/releases/latest/download/$ASSET"
 # Download
 echo "Downloading latest version..."
 curl -fsSL "$URL" -o /tmp/docgen_new
-chmod +x /tmp/docgen_new
+chmod +x /tmp/docgen_new  
 
 # Locate and replace
 TARGET=$(which docgen)

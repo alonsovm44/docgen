@@ -11,7 +11,7 @@
                 "ctime"
             ],
             "doc_path": ".docgen/docs/src/core.hpp.md",
-            "hash": "6eb9f7cc95d6fe41",
+            "hash": "d8b03896fe603dc2",
             "path": "src/core.hpp",
             "summary": "The `docgen` tool is a command-line utility designed to automate the generation and maintenance of documentation for software projects. It leverages AI models to create comprehensive Markdown documentation for source code files, tracks changes, and manages project configuration."
         },
@@ -20,9 +20,9 @@
                 "core.hpp"
             ],
             "doc_path": ".docgen/docs/src/main.cpp.md",
-            "hash": "23529cdeb45923f3",
+            "hash": "ba772ea53d2763b0",
             "path": "src/main.cpp",
-            "summary": "Here is the updated documentation with **only the sections that changed**, preserving the existing structure and wording wherever possible."
+            "summary": "Here is the updated documentation with **only the sections that changed**, preserving the existing structure and wording exactly where possible."
         },
         {
             "dependencies": [],
@@ -30,7 +30,57 @@
             "hash": "bab66a3cb1fdc635",
             "path": "CHANGELOG.md",
             "summary": "Below is a polished, comprehensive Markdown documentation section based on the provided changelog. It focuses on purpose, usage, and behavior rather than restating the obvious."
+        },
+        {
+            "dependencies": [
+                "string"
+            ],
+            "doc_path": ".docgen/docs/src/constants.hpp.md",
+            "hash": "c0eb1895e649bf8a",
+            "path": "src/constants.hpp",
+            "summary": "This file defines several constants used in the DocGen project for managing file paths and configuration."
+        },
+        {
+            "dependencies": [],
+            "doc_path": ".docgen/docs/src/update.ps1.md",
+            "hash": "014ae2448f31f4f6",
+            "path": "src/update.ps1",
+            "summary": "This script automates the process of upgrading the `docgen` executable to its latest version from a GitHub release. It ensures a seamless update by replacing the current executable with the new version while handling potential conflicts."
+        },
+        {
+            "dependencies": [],
+            "doc_path": ".docgen/docs/src/update.sh.md",
+            "hash": "51452ea105455c89",
+            "path": "src/update.sh",
+            "summary": "Here is the updated documentation with **only the necessary changes**, preserving the original structure and wording wherever possible."
+        },
+        {
+            "dependencies": [
+                "iostream",
+                "fstream",
+                "string",
+                "vector",
+                "filesystem",
+                "sstream",
+                "iomanip",
+                "cstdlib",
+                "cstdio",
+                "array",
+                "algorithm",
+                "regex",
+                "json.hpp",
+                "with",
+                "Namespace",
+                "Module",
+                "Module",
+                "Name",
+                "Name"
+            ],
+            "doc_path": ".docgen/docs/src/utils.hpp.md",
+            "hash": "86b8fe8d34bf26b7",
+            "path": "src/utils.hpp",
+            "summary": "Here’s the updated documentation reflecting the changes in the code while preserving the existing structure and content where possible:"
         }
     ],
-    "last_update": "2026-03-07T08:21:40Z"
+    "last_update": "2026-03-07T08:39:12Z"
 }

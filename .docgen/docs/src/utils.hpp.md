@@ -1,4 +1,4 @@
-Below is comprehensive Markdown documentation tailored to the purpose, behavior, and usage patterns of the provided utilities. It avoids restating trivial language‑level details and instead focuses on design intent, operational semantics, and practical integration considerations.
+Here’s the updated documentation reflecting the changes in the code while preserving the existing structure and content where possible:
 
 ---
 
@@ -6,7 +6,7 @@ Below is comprehensive Markdown documentation tailored to the purpose, behavior,
 
 This module provides a collection of standalone helper functions designed to support lightweight documentation generation, code analysis, and file‑system traversal workflows. The utilities avoid external heavy dependencies and instead rely on standard C++ facilities, `std::filesystem`, and a minimal hashing implementation.
 
-The functions are intentionally simple, stateless, and header‑only, making them suitable for embedding into tooling pipelines or command‑line utilities.
+The functions are intentionally simple, stateless, and header‑only, making them suitable for embedding into tooling pipelines or command-line utilities.
 
 ---
 
@@ -116,6 +116,7 @@ Executes a POST request using the system’s `curl` binary.
 **Behavior**
 - Serializes the JSON body to a temporary file to avoid shell‑escaping complexities.
 - Constructs a `curl` command with:
+  - `-s` (silent mode)
   - `-X POST`
   - user‑supplied headers
   - `Content-Type: application/json`
@@ -149,6 +150,9 @@ Matches file paths against simple glob‑like patterns.
 - Normalizes path separators to `/` for cross‑platform consistency.
 - Does not support recursive wildcards, character classes, or complex globbing.
 
+**Changes**
+- Now handles Windows-style `\` path separators by normalizing them to `/`.
+
 ---
 
 ## Include Extraction
@@ -173,6 +177,9 @@ Extracts import/include statements from source code across multiple languages.
 - Returns only the matched module/file name, not the full statement.
 - Scans the entire file content, returning matches in order of appearance.
 
+**Changes**
+- Updated regex to include Go-style `package` statements without semicolons.
+
 **Usage Notes**
 - Designed for broad compatibility rather than strict language parsing.
 - May produce false positives in commented code or strings.
@@ -190,3 +197,7 @@ This header provides a compact toolkit for:
 - extracting import/include dependencies.
 
 Its design favors portability, minimal dependencies, and predictable behavior, making it well‑suited for documentation generators, static analysis tools, and build‑time utilities.
+
+**Updates**
+- Enhanced `match_pattern` to handle Windows-style path separators.
+- Improved `extract_includes` to support Go-style `package` statements.

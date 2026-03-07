@@ -1,4 +1,3 @@
-```markdown
 # docgen Self-Upgrade Script Documentation
 
 ## Purpose
@@ -19,10 +18,11 @@ Run the script in a PowerShell session:
 
 ## Behavior
 1. **Error Handling**: The script sets `$ErrorActionPreference = 'Stop'` to halt execution on any errors, ensuring failures are immediately reported.
-2. **Download Latest Version**: Fetches the latest `docgen.exe` from the specified GitHub release URL.
-3. **Backup Current Executable**: Renames the existing `docgen.exe` to `docgen.exe.old` to preserve the previous version.
-4. **Replace with New Version**: Moves the downloaded executable to the original location, effectively upgrading `docgen`.
-5. **Post-Upgrade Notification**: Informs the user to restart their terminal for changes to take effect.
+2. **Locate Current Executable**: Identifies the path of the currently installed `docgen` executable using `Get-Command`.
+3. **Download Latest Version**: Fetches the latest `docgen.exe` from the specified GitHub release URL.
+4. **Backup Current Executable**: Renames the existing `docgen.exe` to `docgen.exe.old` to preserve the previous version, removing any existing `.old` backup beforehand.
+5. **Replace with New Version**: Moves the downloaded executable to the original location, effectively upgrading `docgen`.
+6. **Post-Upgrade Notification**: Informs the user to restart their terminal for changes to take effect.
 
 ### Key Features
 - **Atomic Replacement**: Ensures the upgrade is atomic by renaming the old executable and moving the new one into place, avoiding partial updates.
@@ -36,4 +36,3 @@ Run the script in a PowerShell session:
 ## Notes
 - Adjust the `$url` variable if the release asset name or location changes.
 - The script assumes the `docgen` command is available in the current PATH and is a direct executable file.
-```

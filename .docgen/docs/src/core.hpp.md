@@ -30,6 +30,7 @@ docgen init
 - Supports checking the connection to the AI model.
 - Updates specific configuration fields like `cloud.api_key`, `cloud.protocol`, and `model_id` for both local and cloud modes.
 - Includes enhanced error handling for API key issues and rate limits during connection checks.
+- Added support for updating the `protocol` used in cloud mode.
 
 **Usage:**
 - **Set a configuration key:**  
@@ -39,6 +40,7 @@ docgen init
   Example:  
   ```bash
   docgen config mode cloud
+  docgen config protocol openai
   ```
 
 - **View current configuration:**  
@@ -75,6 +77,7 @@ docgen ignore tests/*.cpp
 - Updates `tree.json` and `docgen.lock` with new file information.
 - Handles rate limits and retries for cloud AI models.
 - Includes RAG (Retrieval-Augmented Generation) for improved context handling.
+- Added support for updating existing documentation based on code changes.
 
 **Example Usage:**
 ```bash
@@ -197,6 +200,7 @@ The tool integrates with AI models to generate documentation. It supports:
 - **Contextual Documentation:** Incorporates context from included files to improve documentation accuracy.
 - **Rate Limit Handling:** Retries requests with exponential backoff for cloud models.
 - **RAG (Retrieval-Augmented Generation):** Enhances context handling by including relevant code snippets.
+- **Protocol Support:** Added support for different API protocols (`simple`, `openai`, `google`).
 
 ---
 

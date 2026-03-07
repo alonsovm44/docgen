@@ -2,10 +2,10 @@
     "CHANGELOG.md": "bab66a3cb1fdc635",
     "installer.ps1": "4cc276f22dd322e3",
     "installer.sh": "82d0f7d676bf319e",
-    "src/constants.hpp": "3482fbc1f686596e",
-    "src/core.hpp": "6eb9f7cc95d6fe41",
-    "src/main.cpp": "23529cdeb45923f3",
-    "src/update.ps1": "431c7e586ef7e012",
-    "src/update.sh": "82490b79f91725f9",
-    "src/utils.hpp": "13475e233e659755"
+    "src/constants.hpp": "c0eb1895e649bf8a",
+    "src/core.hpp": "d8b03896fe603dc2",
+    "src/main.cpp": "ba772ea53d2763b0",
+    "src/update.ps1": "014ae2448f31f4f6",
+    "src/update.sh": "51452ea105455c89",
+    "src/utils.hpp": "86b8fe8d34bf26b7"
 }

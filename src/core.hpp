@@ -1062,6 +1062,58 @@ inline void cmd_validate() {
     }
 }
 
+inline void cmd_graph() {
+    fs::path tree_path = fs::path(DOCGEN_DIR) / "tree.json";
+    if (!fs::exists(tree_path)) {
+        std::cerr << "Error: tree.json not found. Run 'docgen update' first." << std::endl;
+        return;
+    }
+
+    std::ifstream f(tree_path);
+    json tree_data;
+    try {
+        f >> tree_data;
+    } catch (const std::exception& e) {
+        std::cerr << "Error: Failed to parse tree.json: " << e.what() << std::endl;
+        return;
+    }
+
+    std::string project_name = tree_data.value("project_name", "Project");
+    
+    std::stringstream ss;
+    ss << "digraph \"" << project_name << "\" {\n";
+    ss << "    node [shape=box, style=filled, fillcolor=\"#e8e8e8\", fontname=\"Helvetica\"];\n";
+    ss << "    edge [color=\"#555555\"];\n";
+    ss << "    rankdir=LR;\n";
+    ss << "    label=\"" << project_name << " Dependency Graph\";\n";
+    ss << "    labelloc=\"t\";\n\n";
+
+    if (tree_data.contains("files") && tree_data["files"].is_array()) {
+        for (const auto& file : tree_data["files"]) {
+            std::string source = file.value("path", "");
+            if (source.empty()) continue;
+
+            ss << "    \"" << source << "\";\n";
+
+            if (file.contains("dependencies") && file["dependencies"].is_array()) {
+                for (const auto& dep : file["dependencies"]) {
+                    std::string target = dep.get<std::string>();
+                    ss << "    \"" << source << "\" -> \"" << target << "\";\n";
+                }
+            }
+        }
+    }
+    ss << "}\n";
+
+    fs::path output_path = fs::path(DOCGEN_DIR) / "graph.dot";
+    std::ofstream out(output_path);
+    out << ss.str();
+    out.close();
+
+    std::cout << "Graph generated: " << output_path.string() << std::endl;
+    std::cout << "Visualize with: dot -Tpng " << output_path.string() << " -o graph.png" << std::endl;
+}
+
 inline void cmd_upgrade() {
     std::cout << "Checking for updates..." << std::endl;
 #ifdef _WIN32

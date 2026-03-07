@@ -4,8 +4,8 @@
 
 Docgen is a lightweight, C++ CLI tool that automates software documentation using Large Language Models (LLMs). It treats documentation generation as a build step, tracking your source code and incrementally updating documentation only when files change.
 
-## Why this solves "Documentation Hell"
-
+## Why this solves "Documentation Hell"?
+Because you no longer have to bother writing docs yourself, just run `docgen update` and you are good to go. 
 
 ## Features
 
@@ -54,7 +54,43 @@ irm https://raw.githubusercontent.com/alonsovm44/docgen/master/installer.ps1 | i
 curl -fsSL https://raw.githubusercontent.com/alonsovm44/docgen/master/installer.sh | bash
 ```
 
-### Other commands
+## Other commands
+
+### Status
+Check which files have changed since the last update.
+```bash
+docgen status
+```
+
+### Summary
+Generate a `SUMMARY.md` file with a high-level overview of your project.
+```bash
+docgen summary
+```
+
+### Graph
+Generate a dependency graph in DOT format (Graphviz) at `.docgen/graph.dot`.
+```bash
+docgen graph
+```
+
+### Clean
+Remove documentation for files that are no longer tracked.
+```bash
+docgen clean
+```
+
+### Validate
+Verify if documentation is up-to-date (useful for CI/CD).
+```bash
+docgen validate
+```
+
+### Upgrade
+Update docgen to the latest version.
+```bash
+docgen upgrade
+```
 
 ### Reboot
 Run this command to reset your documentation repository (asks for confirmation)

@@ -23,4 +23,4 @@ try {
 } catch {
     Write-Error "Upgrade failed: $_"
     exit 1
-}
+} 

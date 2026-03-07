@@ -129,7 +129,7 @@ inline std::vector<std::string> extract_includes(const std::string& content) {
     // Regex to match:
     // 1. #include or import with "filename" or <filename> (C/C++/Obj-C/etc.)
     // 2. using Namespace; (C#)
-    // 3. from Module import ... (Python)
+    // 3. from Module import ... (Python) 
     // 4. import Module (Python)
     // 5. package Name; (Java) or package Name (Go)
     std::regex re(R"((?:#\s*include|import)\s*[<"]([^>"]+)[>"]|using\s+([\w\.]+)\s*;|from\s+([\w\.]+)\s+import|import\s+([\w\.]+)|\bpackage\s+([\w\.]+)\s*;?)");

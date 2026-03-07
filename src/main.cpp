@@ -1,6 +1,6 @@
 #include "core.hpp"
 
-const std::string VERSION = "0.1.0";
+const std::string VERSION = "0.2.0";
 
 void print_help() {
     std::cout << "Usage: docgen <command> [args...]\n\n"
@@ -13,6 +13,7 @@ void print_help() {
               << "  status     Show status of tracked files (new/modified)\n"
               << "  validate   Check if documentation is up-to-date\n"
               << "  clean      Remove documentation for untracked files\n"
+              << "  graph      Generate dependency graph (DOT format)\n"
               << "  summary    Generate a summary of the documentation status\n"
               << "  upgrade    Upgrade docgen to the latest version\n"
               << "  reboot     Reset the documentation repository (deletes .docgen/)\n"
@@ -67,6 +68,8 @@ int main(int argc, char* argv[]) {
         cmd_clean();
     } else if (command == "validate") {
         cmd_validate();
+    } else if (command == "graph") {
+        cmd_graph();
     } else if (command == "upgrade") {
         cmd_upgrade();
     } else if (command == "reboot") {

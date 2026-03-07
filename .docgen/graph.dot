@@ -1,0 +1,43 @@
+digraph "Project" {
+    node [shape=box, style=filled, fillcolor="#e8e8e8", fontname="Helvetica"];
+    edge [color="#555555"];
+    rankdir=LR;
+    label="Project Dependency Graph";
+    labelloc="t";
+
+    "src/core.hpp";
+    "src/core.hpp" -> "constants.hpp";
+    "src/core.hpp" -> "utils.hpp";
+    "src/core.hpp" -> "set";
+    "src/core.hpp" -> "thread";
+    "src/core.hpp" -> "chrono";
+    "src/core.hpp" -> "map";
+    "src/core.hpp" -> "ctime";
+    "src/main.cpp";
+    "src/main.cpp" -> "core.hpp";
+    "CHANGELOG.md";
+    "src/constants.hpp";
+    "src/constants.hpp" -> "string";
+    "src/update.ps1";
+    "src/update.sh";
+    "src/utils.hpp";
+    "src/utils.hpp" -> "iostream";
+    "src/utils.hpp" -> "fstream";
+    "src/utils.hpp" -> "string";
+    "src/utils.hpp" -> "vector";
+    "src/utils.hpp" -> "filesystem";
+    "src/utils.hpp" -> "sstream";
+    "src/utils.hpp" -> "iomanip";
+    "src/utils.hpp" -> "cstdlib";
+    "src/utils.hpp" -> "cstdio";
+    "src/utils.hpp" -> "array";
+    "src/utils.hpp" -> "algorithm";
+    "src/utils.hpp" -> "regex";
+    "src/utils.hpp" -> "json.hpp";
+    "src/utils.hpp" -> "with";
+    "src/utils.hpp" -> "Namespace";
+    "src/utils.hpp" -> "Module";
+    "src/utils.hpp" -> "Module";
+    "src/utils.hpp" -> "Name";
+    "src/utils.hpp" -> "Name";
+}
