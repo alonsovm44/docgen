@@ -1,6 +1,6 @@
 #include "core.hpp"
 
-const std::string VERSION = "0.2.1";
+const std::string VERSION = "0.2.2";
 
 void print_help() {
     std::cout << "Usage: docgen <command> [args...]\n\n"
