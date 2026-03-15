@@ -7,10 +7,16 @@ if ! command -v curl &> /dev/null; then
     exit 1
 fi
 
+CLONED_DIR=""
 if [ ! -f "src/main.cpp" ]; then
-    echo "Error: src/main.cpp not found."
-    echo "Please clone the repository and run this script from the project root."
-    exit 1
+    if ! command -v git &> /dev/null; then
+        echo "Error: git not found. Please install git to download the source code."
+        exit 1
+    fi
+    echo "Source code not found locally. Cloning repository..."
+    CLONED_DIR=$(mktemp -d)
+    git clone https://github.com/alonsovm44/docgen.git "$CLONED_DIR"
+    cd "$CLONED_DIR" || exit 1
 fi
 
 if ! command -v ollama &> /dev/null; then
@@ -91,4 +97,9 @@ if [ -f docgen ]; then
 else
     echo "Build failed."
     exit 1
+fi
+
+if [ -n "$CLONED_DIR" ]; then
+    cd - > /dev/null || true
+    rm -rf "$CLONED_DIR"
 fi

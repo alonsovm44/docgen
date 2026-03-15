@@ -1,0 +1,5 @@
+$$ main{
+    copy docgen.exe from CWD
+    paste it in C:\docgen\
+    overwrite current docgen.exe found in C:\docgen\
+}$$

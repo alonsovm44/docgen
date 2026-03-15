@@ -6,9 +6,16 @@ if (-not (Get-Command curl -ErrorAction SilentlyContinue)) {
     Write-Warning "curl not found. docgen requires curl to make API requests."
 }
 
+$clonedDir = $null
 if (-not (Test-Path "src/main.cpp")) {
-    Write-Error "src/main.cpp not found. Please clone the repository and run this script from the project root."
-    exit 1
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+        Write-Error "git not found. Please install git to download the source code."
+        exit 1
+    }
+    Write-Host "Source code not found locally. Cloning repository..."
+    $clonedDir = Join-Path $env:TEMP "docgen-source-$(Get-Random)"
+    git clone https://github.com/alonsovm44/docgen.git $clonedDir
+    Set-Location $clonedDir
 }
 
 if (-not (Get-Command ollama -ErrorAction SilentlyContinue)) {
@@ -94,4 +101,9 @@ if (Test-Path docgen.exe) {
 } else {
     Write-Error "Build failed."
     exit 1
+}
+
+if ($clonedDir) {
+    Set-Location $env:USERPROFILE
+    Remove-Item -Recurse -Force $clonedDir -ErrorAction SilentlyContinue
 }
