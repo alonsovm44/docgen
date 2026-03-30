@@ -8,14 +8,14 @@ if (-not (Get-Command curl -ErrorAction SilentlyContinue)) {
 
 $clonedDir = $null
 if (-not (Test-Path "src/main.cpp")) {
-    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-        Write-Error "git not found. Please install git to download the source code."
-        exit 1
-    }
-    Write-Host "Source code not found locally. Cloning repository..."
+    Write-Host "Source code not found locally. Downloading repository archive..."
     $clonedDir = Join-Path $env:TEMP "docgen-source-$(Get-Random)"
-    git clone https://github.com/alonsovm44/docgen.git $clonedDir
-    Set-Location $clonedDir
+    New-Item -ItemType Directory -Path $clonedDir | Out-Null
+    $zipPath = Join-Path $clonedDir "docgen.zip"
+    Invoke-WebRequest -Uri "https://github.com/alonsovm44/docgen/archive/refs/heads/master.zip" -OutFile $zipPath
+    Expand-Archive -Path $zipPath -DestinationPath $clonedDir -Force
+    $extractedFolder = Get-ChildItem -Path $clonedDir -Directory | Where-Object Name -like "docgen-*" | Select-Object -First 1
+    Set-Location $extractedFolder.FullName
 }
 
 if (-not (Get-Command ollama -ErrorAction SilentlyContinue)) {

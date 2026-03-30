@@ -1,13 +1,13 @@
 # docgen Setup Script Documentation
 
 ## Purpose
-This PowerShell script automates the setup and compilation of the `docgen` tool. It checks for prerequisites, installs missing dependencies, clones the source code if necessary, and compiles the source code using an available C++ compiler.
+This PowerShell script automates the setup and compilation of the `docgen` tool. It checks for prerequisites, installs missing dependencies, downloads the source code if necessary, and compiles the source code using an available C++ compiler.
 
 ## Usage
 Run the script in a PowerShell environment with administrative privileges if installing dependencies like Ollama. The script handles the following tasks:
 
-1. **Prerequisite Check**: Verifies the presence of `curl`, `git`, and `ollama`.
-2. **Source Code Retrieval**: Clones the `docgen` repository if the source code is not found locally.
+1. **Prerequisite Check**: Verifies the presence of `curl` and `ollama`.
+2. **Source Code Retrieval**: Downloads the `docgen` repository if the source code is not found locally.
 3. **Dependency Installation**: Prompts to install Ollama and a C++ compiler (MinGW) if they're missing.
 4. **Compilation**: Compiles `docgen` using either `g++`, `clang++`, or `MSVC` (cl) if available.
 
@@ -15,11 +15,10 @@ Run the script in a PowerShell environment with administrative privileges if ins
 
 ### Prerequisite Check
 - **curl**: Required for API requests. If missing, a warning is displayed, but the script continues.
-- **git**: Required to clone the source code if not found locally. If missing, the script exits with an error.
 - **ollama**: If missing, the script prompts the user to install it. If the user agrees (`y`), it downloads and runs the Ollama installer.
 
 ### Source Code Retrieval
-- If `src/main.cpp` is not found, the script clones the `docgen` repository from GitHub into a temporary directory.
+- If `src/main.cpp` is not found, the script downloads and extracts the `docgen` repository archive from GitHub into a temporary directory.
 
 ### Compiler Installation
 - If no C++ compiler is found, the script downloads and installs a portable version of MinGW (w64devkit) and adds it to the system's PATH.
@@ -37,7 +36,7 @@ Run the script in a PowerShell environment with administrative privileges if ins
 
 ## Example Workflow
 1. Run the script.
-2. If the source code is not found locally, it is cloned from GitHub.
+2. If the source code is not found locally, it is downloaded from GitHub.
 3. If `ollama` is missing, choose `y` to install it.
 4. If no compiler is found, MinGW is installed.
 5. The script compiles `docgen` using the detected compiler.

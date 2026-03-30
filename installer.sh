@@ -9,13 +9,13 @@ fi
 
 CLONED_DIR=""
 if [ ! -f "src/main.cpp" ]; then
-    if ! command -v git &> /dev/null; then
-        echo "Error: git not found. Please install git to download the source code."
+    if ! command -v tar &> /dev/null; then
+        echo "Error: tar not found. Please install tar to extract the source code."
         exit 1
     fi
-    echo "Source code not found locally. Cloning repository..."
+    echo "Source code not found locally. Downloading repository archive..."
     CLONED_DIR=$(mktemp -d)
-    git clone https://github.com/alonsovm44/docgen.git "$CLONED_DIR"
+    curl -fsSL https://github.com/alonsovm44/docgen/archive/refs/heads/master.tar.gz | tar -xz -C "$CLONED_DIR" --strip-components=1
     cd "$CLONED_DIR" || exit 1
 fi
 

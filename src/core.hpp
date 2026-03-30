@@ -106,6 +106,12 @@ inline std::set<fs::path> scan_files(const DocfileConfig& config) {
 
             if (!is_text_file(p)) continue;
 
+            // Mitigate prompt fatigue: skip extremely large files
+            // 50KB is roughly ~12k-15k tokens.
+            if (fs::file_size(p) > 50000) {
+                continue;
+            }
+
             files.insert(p);
         }
     }
