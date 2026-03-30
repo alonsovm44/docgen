@@ -8,7 +8,7 @@
 
 | Basic Workflow | Interactive Chat | Auto-Update |
 |:---:|:---:|:---:|
-| ![Docgen Demo](assets/demo.gif) | ![Docgen Chat Demo](assets/query-chat-demo.gif) | ![Docgen Auto Demo](assets/auto-demo.gif) |
+| ![Docgen Demo](assets/demo.gif) | ![Docgen Chat Demo](assets/querydemo.gif) | ![Docgen Auto Demo](assets/auto.gif) |
 
 One-liner
 Docgen automatically keeps your C++ project docs accurate: store intent/spec next to source, run `docgen update` and only changed files get regenerated. Fast, auditable, and works locally with Ollama or in the cloud.
