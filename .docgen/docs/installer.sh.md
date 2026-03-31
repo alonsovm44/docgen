@@ -1,3 +1,11 @@
+<!-- docgen-provenance
+model_id: qwen2.5-coder:7b
+prompt_hash: 86d4ddc83786bcfa
+timestamp: 2026-03-31T01:12:22Z
+tool_version: docgen v0.2.0
+base_commit: b87be9bfdf443ab7b95aba13ea2bf5b56008783a
+-->
+
 # docgen Build Script Documentation
 
 ## Purpose
@@ -30,7 +38,7 @@ This script automates the installation of the `docgen` tool by preferring prebui
 - Ensures the binary is executable.  
 
 ### Fallback to Source Code
-- If no prebuilt asset is found, downloads the source code archive from the main branch.  
+- If no prebuilt asset is found, downloads the source code archive from the latest release or a specified tag.  
 - Provides detailed instructions for building from source, including extraction, CMake, and compilation steps.  
 
 ## Usage
@@ -46,7 +54,13 @@ This script automates the installation of the `docgen` tool by preferring prebui
    LOCAL_INSTALL=~/.local/bin ./install.sh
    ```
 
-3. **Post-Installation**:  
+3. **Specify Release Tag**:  
+   Install from a specific release tag instead of the latest:  
+   ```bash
+   RELEASE_TAG=v1.2.3 ./install.sh
+   ```
+
+4. **Post-Installation**:  
    - After successful installation, run the tool using:  
      ```bash
      docgen --help
@@ -57,6 +71,7 @@ This script automates the installation of the `docgen` tool by preferring prebui
   - No downloader (`curl`, `wget`, or `python3`) is available.  
   - No prebuilt asset or source code can be downloaded.  
   - The binary cannot be located in the extracted archive.  
+  - The specified release tag does not exist.  
 
 ## Dependencies
 - **Downloader**: `curl`, `wget`, or `python3` (required for downloading assets).  

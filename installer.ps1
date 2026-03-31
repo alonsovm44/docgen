@@ -1,98 +1,113 @@
-<#
-Foolproof PowerShell installer for Docgen (no git required)
-- prefers prebuilt release assets from GitHub Releases
-- falls back to source archive download and prints build instructions
-- uses Invoke-WebRequest / PowerShell webclient behaviour
-#>
+$ErrorActionPreference = 'Stop'
+Write-Host "Starting docgen installation..."
 
-param(
-  [string]$Owner = "alonsovm44",
-  [string]$Repo  = "docgen",
-  [string]$InstallDir = "$env:USERPROFILE\\bin"  # user-local default
-)
-
-function Write-Info { param($m) Write-Host "[INFO] $m" }
-function Write-ErrorExit { param($m) Write-Host "[ERROR] $m"; exit 1 }
-
-# Ensure install dir exists and is on PATH
-if (-not (Test-Path -Path $InstallDir)) {
-  New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-}
-if (-not ($Env:PATH -split ";" | ForEach-Object { $_.Trim() } | Where-Object { $_ -eq $InstallDir })) {
-  Write-Info "Note: $InstallDir is not on PATH for current session. You can add it to PATH manually or re-open terminal after install."
-}
-
-$api = "https://api.github.com/repos/$Owner/$Repo/releases/latest"
-$tmp = New-Item -ItemType Directory -Force -Path ([IO.Path]::Combine($env:TEMP, "$Repo-install-" + [Guid]::NewGuid()))
-
-Write-Info "Querying GitHub releases..."
-try {
-  $resp = Invoke-RestMethod -Uri $api -UseBasicParsing -ErrorAction Stop
-} catch {
-  Write-ErrorExit "Failed to query GitHub API: $_"
-}
-
-# Prefer asset matching OS/arch name
-$os = if ($IsWindows) { "windows" } else { "unknown" }
-$arch = if ([Environment]::Is64BitOperatingSystem) { "x86_64" } else { "x86" }
-$target_names = @("${os}-${arch}.zip","${Repo}-${os}-${arch}.zip","${os}-${arch}.zip")
-$asset = $null
-foreach ($n in $target_names) {
-  $asset = $resp.assets | Where-Object { $_.name -eq $n }
-  if ($asset) { break }
-}
-if (-not $asset) {
-  # fallback: first windows asset
-  $asset = $resp.assets | Where-Object { $_.name -match "windows" } | Select-Object -First 1
-}
-
-if ($asset) {
-  $url = $asset.browser_download_url
-  Write-Info "Found release asset: $($asset.name). Downloading..."
-  $out = Join-Path $tmp $asset.name
-  try {
-    Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing -ErrorAction Stop
-  } catch {
-    Write-ErrorExit "Failed to download asset: $_"
-  }
-
-  # If it's a zip, extract
-  if ($out -like "*.zip") {
-    Write-Info "Extracting $out..."
-    Expand-Archive -Path $out -DestinationPath $tmp -Force
-    # look for executable
-    $exe = Get-ChildItem -Path $tmp -Recurse -File | Where-Object { $_.Name -match "\.exe$" } | Select-Object -First 1
-    if (-not $exe) {
-      Write-ErrorExit "No executable found in archive. Contents: $(Get-ChildItem -Path $tmp -Recurse -File | Select-Object -First 20 | ForEach-Object { $_.FullName } )"
+# Ask to install Ollama if not found
+if (-not (Get-Command "ollama" -ErrorAction SilentlyContinue)) {
+    Write-Host "Ollama is not installed. It is highly recommended for local AI processing."
+    $install_ollama = Read-Host "Would you like to install Ollama now? (y/n)"
+    if ($install_ollama -match '^[Yy]') {
+        Write-Host "Installing Ollama..."
+        $ollama_installer = "$env:TEMP\OllamaSetup.exe"
+        Invoke-WebRequest -Uri "https://ollama.com/download/OllamaSetup.exe" -OutFile $ollama_installer
+        Start-Process -FilePath $ollama_installer -Wait -NoNewWindow
+    } else {
+        Write-Host "Skipping Ollama installation."
     }
-    $dest = Join-Path $InstallDir $exe.Name
-    Copy-Item -Path $exe.FullName -Destination $dest -Force
-    Write-Info "Installed $($exe.Name) to $InstallDir"
-    Write-Info "If $InstallDir is not on PATH, add it or move the binary to a folder that is."
-    exit 0
-  } else {
-    Write-Info "Downloaded asset to $out. Please extract and move the binary to $InstallDir."
-    exit 0
-  }
+} else {
+    Write-Host "Ollama is already installed."
 }
 
-# fallback: download source tarball
-$src = "https://github.com/${Owner}/${Repo}/archive/refs/heads/main.zip"
-$outsrc = Join-Path $tmp "source.zip"
-Write-Info "No prebuilt release asset found for your platform. Downloading source archive as a fallback..."
-try {
-  Invoke-WebRequest -Uri $src -OutFile $outsrc -UseBasicParsing -ErrorAction Stop
-} catch {
-  Write-ErrorExit "Failed to download source archive: $_"
+$InstallDir = "$env:USERPROFILE\.local\bin"
+if (-not (Test-Path $InstallDir)) {
+    New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
 }
-Write-Host ""
-Write-Host "Source archive downloaded to: $outsrc"
-Write-Host "Building from source on Windows typically requires visual studio / msbuild / cmake. The installer will not attempt to build automatically."
-Write-Host ""
-Write-Host "Suggested steps:"
-Write-Host "  1) Extract the zip: Expand-Archive -Path $outsrc -DestinationPath $tmp"
-Write-Host "  2) Open the project in Visual Studio or follow the repo README build instructions."
-Write-Host "  3) After building, copy the resulting binary to $InstallDir"
-Write-Host ""
-Write-Host "Tip: request prebuilt Windows release assets in the repo to enable one-step installs."
-exit 0
+
+# Determine OS and Architecture
+$OS = "windows"
+$Arch = if ($env:PROCESSOR_ARCHITECTURE -match "AMD64|IA64") { "amd64" } elseif ($env:PROCESSOR_ARCHITECTURE -match "ARM64") { "arm64" } else { "x86" }
+
+Write-Host "Fetching latest release information for docgen..."
+$ReleaseUrl = "https://api.github.com/repos/alonsovm44/docgen/releases/latest"
+try {
+    $ReleaseData = Invoke-RestMethod -Uri $ReleaseUrl
+    $Asset = $ReleaseData.assets | Where-Object { $_.name -match $OS -and $_.name -match $Arch } | Select-Object -First 1
+    $DownloadUrl = $Asset.browser_download_url
+} catch {
+    Write-Host "Could not fetch release data."
+    $DownloadUrl = $null
+}
+
+function Build-FromSource {
+    Write-Host "Checking build dependencies..."
+    
+    $hasGpp = Get-Command "g++" -ErrorAction SilentlyContinue
+    $hasClang = Get-Command "clang++" -ErrorAction SilentlyContinue
+    if (-not $hasGpp -and -not $hasClang) {
+        Write-Error "C++ compiler not found. Please install MinGW-w64 or Clang, and ensure it is in your PATH."
+        exit 1
+    }
+
+    $makeCmd = if (Get-Command "make" -ErrorAction SilentlyContinue) { "make" } elseif (Get-Command "mingw32-make" -ErrorAction SilentlyContinue) { "mingw32-make" } else { $null }
+    if (-not $makeCmd) {
+        Write-Error "make utility not found. Please install make (or mingw32-make) and ensure it is in your PATH."
+        exit 1
+    }
+
+    if ((Test-Path "src\main.cpp") -and (Test-Path "Makefile")) {
+        Write-Host "Local source code detected. Building..."
+        Invoke-Expression "$makeCmd all"
+        Move-Item -Path "docgen.exe" -Destination "$InstallDir\docgen.exe" -Force
+        Write-Host "docgen successfully built and installed to $InstallDir\docgen.exe"
+    } else {
+        Write-Host "Downloading source code..."
+        $TmpDir = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path $TmpDir | Out-Null
+        Set-Location $TmpDir
+
+        Invoke-WebRequest -Uri "https://github.com/alonsovm44/docgen/archive/refs/heads/master.zip" -OutFile "source.zip"
+        Expand-Archive -Path "source.zip" -DestinationPath "." -Force
+        Set-Location "docgen-master"
+        
+        Write-Host "Downloading tree-sitter dependencies..."
+        $repos = @("tree-sitter", "tree-sitter-c", "tree-sitter-cpp", "tree-sitter-python", "tree-sitter-javascript", "tree-sitter-typescript", "tree-sitter-go", "tree-sitter-rust")
+        foreach ($repo in $repos) {
+            Invoke-WebRequest -Uri "https://github.com/tree-sitter/$repo/archive/refs/heads/master.zip" -OutFile "$repo.zip"
+            Expand-Archive -Path "$repo.zip" -DestinationPath "." -Force
+            Rename-Item -Path "$repo-master" -NewName $repo
+        }
+
+        Write-Host "Building docgen from source..."
+        Invoke-Expression "$makeCmd all"
+        Move-Item -Path "docgen.exe" -Destination "$InstallDir\docgen.exe" -Force
+        
+        Set-Location $env:USERPROFILE
+        Remove-Item -Path $TmpDir -Recurse -Force
+        Write-Host "docgen successfully built and installed to $InstallDir\docgen.exe"
+    }
+}
+
+if ($DownloadUrl) {
+    Write-Host "Downloading pre-built binary for $OS-$Arch..."
+    try {
+        Invoke-WebRequest -Uri $DownloadUrl -OutFile "$InstallDir\docgen.exe"
+        Write-Host "docgen successfully installed to $InstallDir\docgen.exe"
+    } catch {
+        Write-Host "Failed to download pre-built binary. Falling back to source build..."
+        Build-FromSource
+    }
+} else {
+    Write-Host "No pre-built binary found for $OS-$Arch. Falling back to source installation..."
+    Build-FromSource
+}
+
+# Path warning
+$currentPath = [Environment]::GetEnvironmentVariable("PATH", "User") + ";" + [Environment]::GetEnvironmentVariable("PATH", "Machine")
+if ($currentPath -notmatch [regex]::Escape($InstallDir)) {
+    Write-Host "==================================================" -ForegroundColor Yellow
+    Write-Host "WARNING: $InstallDir is not in your PATH." -ForegroundColor Yellow
+    Write-Host "Please add it to your Environment Variables:" -ForegroundColor Yellow
+    Write-Host "[Environment]::SetEnvironmentVariable('PATH', `$env:PATH + ';$InstallDir', 'User')" -ForegroundColor Cyan
+    Write-Host "==================================================" -ForegroundColor Yellow
+}
+
+Write-Host "Setup complete! Run 'docgen' to get started." -ForegroundColor Green

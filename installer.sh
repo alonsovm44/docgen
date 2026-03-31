@@ -1,217 +1,138 @@
-#!/usr/bin/env bash
-# Foolproof installer for Docgen (no git required)
-# - prefers prebuilt release assets from GitHub Releases
-# - falls back to source archive download and prints build instructions
-# - download methods: curl -> wget -> python3
-# - verifies checksums if a checksum asset is available
+#!/bin/bash
+set -e
 
-set -euo pipefail
-OWNER="alonsovm44"
-REPO="docgen"
-BIN_NAME="docgen"
-GITHUB_API="https://api.github.com/repos/${OWNER}/${REPO}/releases/latest"
+echo "Starting docgen installation..."
 
-error() { echo "ERROR: $*" >&2; exit 1; }
-info() { echo "INFO: $*"; }
-
-has_cmd() { command -v "$1" >/dev/null 2>&1; }
-
-download_to() {
-  url="$1"; out="$2"
-  if has_cmd curl; then
-    curl -fsSL "$url" -o "$out"
-  elif has_cmd wget; then
-    wget -qO "$out" "$url"
-  elif has_cmd python3; then
-    python3 - <<PY - "$url" "$out"
-import sys,urllib.request
-url, out = sys.argv[1], sys.argv[2]
-with urllib.request.urlopen(url) as r, open(out, "wb") as f:
-    f.write(r.read())
-PY
-  else
-    error "No downloader available (curl, wget or python3 required). Please download $url manually."
-  fi
-}
-
-detect_os_arch() {
-  OS="$(uname -s)"
-  ARCH="$(uname -m)"
-  case "$OS" in
-    Linux) os="linux" ;;
-    Darwin) os="macos" ;;
-    *) os="$OS" ;;
-  esac
-  case "$ARCH" in
-    x86_64|amd64) arch="x86_64" ;;
-    aarch64|arm64) arch="arm64" ;;
-    *) arch="$ARCH" ;;
-  esac
-  echo "${os}-${arch}"
-}
-
-install_dir="/usr/local/bin"
-if [ -n "${LOCAL_INSTALL:-}" ]; then
-  # Allow override: LOCAL_INSTALL=~/.local/bin ./install.sh
-  install_dir="${LOCAL_INSTALL}"
-fi
-
-tmpdir="$(mktemp -d)"
-trap 'rm -rf "$tmpdir"' EXIT
-
-info "Detecting OS/arch..."
-target="$(detect_os_arch)"
-info "Target: $target"
-
-info "Querying GitHub releases for ${OWNER}/${REPO}..."
-# Use python3 for JSON parsing if available, else attempt curl+simple grep (best-effort).
-release_json="$tmpdir/release.json"
-if has_cmd curl; then
-  curl -fsSL "$GITHUB_API" -o "$release_json"
-elif has_cmd wget; then
-  wget -qO "$release_json" "$GITHUB_API"
-elif has_cmd python3; then
-  python3 - <<PY >"$release_json"
-import urllib.request,sys
-with urllib.request.urlopen("${GITHUB_API}") as r:
-    sys.stdout.write(r.read().decode())
-PY
-else
-  error "No HTTP client available for querying GitHub API (curl/wget/python3 required)."
-fi
-
-# Try to find an asset matching the OS/arch pattern: e.g. docgen-linux-x86_64.tar.gz
-asset_url=""
-if has_cmd python3; then
-  asset_url="$(python3 - <<PY
-import json,sys
-data=json.load(open("$release_json"))
-assets=data.get("assets",[])
-target="$target"
-# preferences: exact os-arch, then shorter matches
-names=[f"{target}.tar.gz", f"{target}.zip", f"${BIN_NAME}-{target}.tar.gz", f"${BIN_NAME}-{target}.zip"]
-for a in assets:
-    name=a.get("name","")
-    if name in names:
-        print(a.get("browser_download_url"))
-        sys.exit(0)
-# fallback: try any asset that contains os or arch
-for a in assets:
-    name=a.get("name","")
-    if "linux" in name or "macos" in name or "darwin" in name:
-        print(a.get("browser_download_url"))
-        sys.exit(0)
-# no asset found
-print("")
-PY
-)"
-fi
-
-if [ -n "$asset_url" ]; then
-  info "Found release asset: $asset_url"
-  out="$tmpdir/asset"
-  download_to "$asset_url" "$out"
-  # try to find a checksum asset in release assets
-  checksum_url="$(python3 - <<PY
-import json
-data=json.load(open("$release_json"))
-for a in data.get("assets",[]):
-    if "sha256" in a.get("name","").lower() or "checksums" in a.get("name","").lower():
-        print(a.get("browser_download_url"))
-        break
-else:
-    print("")
-PY
-)"
-  if [ -n "$checksum_url" ]; then
-    info "Found checksum asset; downloading..."
-    checks="$tmpdir/checksums.txt"
-    download_to "$checksum_url" "$checks"
-    if has_cmd sha256sum; then
-      (cd "$tmpdir" && sha256sum -c "$checks" 2>/dev/null) || info "Checksum check did not match or not runnable; please verify manually."
-    elif has_cmd shasum; then
-      shasum -a 256 -c "$checks" 2>/dev/null || info "Checksum check did not match or not runnable; please verify manually."
+# Function to install missing packages
+install_pkg() {
+    local pkg=$1
+    echo "Attempting to install $pkg..."
+    if command -v apt-get &> /dev/null; then
+        sudo apt-get update && sudo apt-get install -y "$pkg"
+    elif command -v dnf &> /dev/null; then
+        sudo dnf install -y "$pkg"
+    elif command -v yum &> /dev/null; then
+        sudo yum install -y "$pkg"
+    elif command -v pacman &> /dev/null; then
+        sudo pacman -S --noconfirm "$pkg"
+    elif command -v zypper &> /dev/null; then
+        sudo zypper install -y "$pkg"
+    elif command -v brew &> /dev/null; then
+        brew install "$pkg"
     else
-      info "No sha tool to verify checksums; please verify $out manually if you care about integrity."
+        echo "Error: Could not find a supported package manager to install $pkg."
+        echo "Please install $pkg manually and run this script again."
+        exit 1
     fi
-  fi
+}
 
-  # extract or move
-  case "$out" in
-    *.tar.gz|*.tgz)
-      info "Extracting tar.gz..."
-      tar -xzf "$out" -C "$tmpdir"
-      # locate binary
-      binpath="$(find "$tmpdir" -type f -name "$BIN_NAME" -perm /u=x,g=x,o=x | head -n1 || true)"
-      if [ -z "$binpath" ]; then
-        # maybe in bin subdir
-        binpath="$(find "$tmpdir" -type f -name "${BIN_NAME}*" | head -n1 || true)"
-      fi
-      ;;
-    *.zip)
-      if has_cmd unzip; then
-        unzip -q "$out" -d "$tmpdir"
-        binpath="$(find "$tmpdir" -type f -name "$BIN_NAME" -perm /u=x,g=x,o=x | head -n1 || true)"
-      else
-        info "zip archive found but 'unzip' not available. Extract $out manually."
-        exit 0
-      fi
-      ;;
-    *)
-      info "Downloaded asset saved to $out. Please extract/move the binary manually."
-      exit 0
-      ;;
-  esac
+# Check for core dependencies
+for cmd in curl tar grep; do
+    if ! command -v "$cmd" &> /dev/null; then
+        install_pkg "$cmd"
+    fi
+done
 
-  if [ -z "$binpath" ]; then
-    info "Could not find the ${BIN_NAME} binary in the archive. Check the release assets manually."
-    ls -la "$tmpdir"
-    exit 1
-  fi
-
-  info "Installing ${BIN_NAME} to ${install_dir} (may require sudo)..."
-  mkdir -p "$install_dir"
-  if [ -w "$install_dir" ]; then
-    cp "$binpath" "$install_dir/$BIN_NAME"
-  else
-    sudo cp "$binpath" "$install_dir/$BIN_NAME"
-  fi
-  sudo chmod +x "$install_dir/$BIN_NAME" 2>/dev/null || chmod +x "$install_dir/$BIN_NAME"
-  info "Installed: $(which $BIN_NAME 2>/dev/null || echo ${install_dir}/${BIN_NAME})"
-  info "Done. Run: $BIN_NAME --help"
-  exit 0
+# Ask to install Ollama if not found
+if ! command -v ollama &> /dev/null; then
+    echo "Ollama is not installed. It is highly recommended for local AI processing."
+    read -p "Would you like to install Ollama now? (y/n): " install_ollama
+    if [[ "$install_ollama" =~ ^[Yy]$ ]]; then
+        echo "Installing Ollama..."
+        curl -fsSL https://ollama.com/install.sh | sh
+    else
+        echo "Skipping Ollama installation."
+    fi
+else
+    echo "Ollama is already installed."
 fi
 
-# If we reach here: no prebuilt asset found. Offer to download source tarball and show build instructions.
-info "No prebuilt release asset found for ${target}."
-info "Attempting to download source archive as fallback (no git required)."
+INSTALL_DIR="$HOME/.local/bin"
+mkdir -p "$INSTALL_DIR"
 
-src_url="https://github.com/${OWNER}/${REPO}/archive/refs/heads/main.tar.gz"
-src_out="$tmpdir/source.tar.gz"
-download_to "$src_url" "$src_out"
-info "Source archive downloaded to $src_out"
-info "Building from source may require: cmake, make, a C++ toolchain. The installer will not attempt to compile automatically."
-cat <<EOF
+# Determine OS and Architecture
+OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+ARCH="$(uname -m)"
+if [[ "$ARCH" == "x86_64" ]]; then ARCH="amd64"; fi
+if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then ARCH="arm64"; fi
 
-Next steps:
+echo "Fetching latest release information for docgen..."
+LATEST_RELEASE_URL="https://api.github.com/repos/alonsovm44/docgen/releases/latest"
+DOWNLOAD_URL=$(curl -s "$LATEST_RELEASE_URL" | grep "browser_download_url" | grep "$OS" | grep "$ARCH" | cut -d '"' -f 4 | head -n 1)
 
-1) Extract:
-   mkdir -p $tmpdir/src && tar -xzf $src_out -C $tmpdir/src
+build_from_source() {
+    echo "Checking build dependencies..."
+    
+    # Ensure C++ compiler
+    if ! command -v g++ &> /dev/null && ! command -v clang++ &> /dev/null; then
+        echo "C++ compiler not found."
+        if [[ "$OS" == "darwin" ]]; then
+            echo "Please install Xcode Command Line Tools: xcode-select --install"
+            exit 1
+        else
+            install_pkg g++
+        fi
+    fi
 
-2) Inspect README/build instructions in the repo. Typical steps:
-   cd $tmpdir/src/${REPO}-main
-   mkdir build && cd build
-   cmake ..
-   make -j
+    # Ensure make
+    if ! command -v make &> /dev/null; then
+        install_pkg make
+    fi
 
-3) After compilation, copy the resulting binary to ${install_dir}:
-   sudo cp <path-to-built-binary> ${install_dir}/${BIN_NAME}
-   sudo chmod +x ${install_dir}/${BIN_NAME}
+    if [ -f "src/main.cpp" ] && [ -f "Makefile" ]; then
+        echo "Local source code detected. Building..."
+        make all
+        mv docgen "$INSTALL_DIR/"
+        echo "docgen successfully built and installed to $INSTALL_DIR/docgen"
+    else
+        echo "Downloading source code..."
+        TMP_DIR=$(mktemp -d)
+        cd "$TMP_DIR"
+        curl -fsSL https://github.com/alonsovm44/docgen/archive/refs/heads/master.tar.gz -o source.tar.gz
+        tar -xzf source.tar.gz
+        cd docgen-master
+        
+        echo "Downloading tree-sitter dependencies..."
+        curl -fsSL https://github.com/tree-sitter/tree-sitter/archive/refs/heads/master.tar.gz | tar -xz && mv tree-sitter-master tree-sitter
+        curl -fsSL https://github.com/tree-sitter/tree-sitter-c/archive/refs/heads/master.tar.gz | tar -xz && mv tree-sitter-c-master tree-sitter-c
+        curl -fsSL https://github.com/tree-sitter/tree-sitter-cpp/archive/refs/heads/master.tar.gz | tar -xz && mv tree-sitter-cpp-master tree-sitter-cpp
+        curl -fsSL https://github.com/tree-sitter/tree-sitter-python/archive/refs/heads/master.tar.gz | tar -xz && mv tree-sitter-python-master tree-sitter-python
+        curl -fsSL https://github.com/tree-sitter/tree-sitter-javascript/archive/refs/heads/master.tar.gz | tar -xz && mv tree-sitter-javascript-master tree-sitter-javascript
+        curl -fsSL https://github.com/tree-sitter/tree-sitter-typescript/archive/refs/heads/master.tar.gz | tar -xz && mv tree-sitter-typescript-master tree-sitter-typescript
+        curl -fsSL https://github.com/tree-sitter/tree-sitter-go/archive/refs/heads/master.tar.gz | tar -xz && mv tree-sitter-go-master tree-sitter-go
+        curl -fsSL https://github.com/tree-sitter/tree-sitter-rust/archive/refs/heads/master.tar.gz | tar -xz && mv tree-sitter-rust-master tree-sitter-rust
 
-Notes:
-- This installer never required 'git'. If you want, open an issue in the repo to request prebuilt release assets for your platform so installation is one-step.
-- If you want an automated build fallback, set LOCAL_BUILD=1 to allow this script to try to run cmake/make (not enabled by default).
+        echo "Building docgen from source..."
+        make all
+        mv docgen "$INSTALL_DIR/"
+        
+        cd "$HOME"
+        rm -rf "$TMP_DIR"
+        echo "docgen successfully built and installed to $INSTALL_DIR/docgen"
+    fi
+}
 
-EOF
+if [[ -n "$DOWNLOAD_URL" ]]; then
+    echo "Downloading pre-built binary for $OS-$ARCH..."
+    if curl -fsSL -o "$INSTALL_DIR/docgen" "$DOWNLOAD_URL"; then
+        chmod +x "$INSTALL_DIR/docgen"
+        echo "docgen successfully installed to $INSTALL_DIR/docgen"
+    else
+        echo "Failed to download pre-built binary. Falling back to source build..."
+        build_from_source
+    fi
+else
+    echo "No pre-built binary found for $OS-$ARCH. Falling back to source installation..."
+    build_from_source
+fi
 
-exit 0
+# Path warning
+if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
+    echo "=================================================="
+    echo "WARNING: $INSTALL_DIR is not in your PATH."
+    echo "Please add it to your shell configuration (e.g., ~/.bashrc or ~/.zshrc):"
+    echo "export PATH=\"\$HOME/.local/bin:\$PATH\""
+    echo "=================================================="
+fi
+
+echo "Setup complete! Run 'docgen' to get started."

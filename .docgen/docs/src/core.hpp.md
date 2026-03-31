@@ -1,3 +1,11 @@
+<!-- docgen-provenance
+model_id: qwen2.5-coder:7b
+prompt_hash: 7da324d92da600b7
+timestamp: 2026-03-31T01:13:33Z
+tool_version: docgen v0.2.0
+base_commit: b87be9bfdf443ab7b95aba13ea2bf5b56008783a
+-->
+
 # `docgen` Command-Line Tool Documentation
 
 ## Overview
