@@ -12,12 +12,9 @@
 | ![Docgen Demo](assets/demo.gif) | ![Docgen Chat Demo](assets/querydemo.gif) | ![Docgen Auto Demo](assets/auto.gif) |
 
 ## Why Docgen matters TO YOU NOW
-**The problem:**
+**The problem:** Documentation rots fast and it is a pain to maintain. You spend all the afternoon updating it, and after one hour of work the docs are de facto a lie. Context switching kills productivity. You write code, then you have to stop, open a `README.md` or a Confluence page, and manually describe your changes. By the time you're done, you've lost your train of thought.
 
-Documentation rots fast and it is a pain to maintain. You spend all the afternoon updating it, and after one hour of work the docs are de facto a lie. Context switching kills productivity. You write code, then you have to stop, open a `README.md` or a Confluence page, and manually describe your changes. By the time you're done, you've lost your train of thought.
-**The solution:**
-
-Open your favorite shell, and run `docgen auto`, your documentation evolves *with* your code. No more post-sprint "doc-fixing" days. No more stale `README`s. Just accurate, up-to-date documentation, always.
+**The solution:** Open your favorite shell, and run `docgen auto`, your documentation evolves *with* your code. No more post-sprint "doc-fixing" days. No more stale `README`s. Just accurate, up-to-date documentation, always.
 
 As you write code, `docgen` watches for file changes and regenerates the relevant documentation *in the background, in real-time*. Your documentation becomes a direct, effortless artifact of your work, not a separate chore.
 
