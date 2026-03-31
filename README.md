@@ -1,8 +1,10 @@
 # Docgen — End documentation drift for good
 
 [![Release](https://img.shields.io/github/v/release/alonsovm44/docgen?color=blue&style=flat-square)](https://github.com/alonsovm44/docgen/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C++17](https://img.shields.io/badge/C++-17-00599C?logo=c%2B%2B&logoColor=white&style=flat-square)]()
 [![Local AI: Ollama](https://img.shields.io/badge/Local_AI-Ollama-black?logo=ollama&style=flat-square)]()
+![Platforms](https://img.shields.io/badge/platforms-Windows%20|%20Linux%20|%20macOS-lightgrey)
 [![AI Powered](https://img.shields.io/badge/AI-Powered-blue?style=flat-square)]()
 
 | Basic Workflow | Interactive Chat | Auto-Update |
@@ -29,7 +31,7 @@ That's it. Docs are updated.
 ## Try it now (safe copy-paste)
 > Note: I get that you may be uncomfortable with piping unknown remote scripts into a shell, you can audit the installer `installer.sh/.ps1` yourself and see it is safe. Otherwise you can use `shellcheck installer.sh`.
 
-Quick (recommended):
+- Quick (recommended):
 
 **Linux / macOS:**
 Download installer, inspect, run:

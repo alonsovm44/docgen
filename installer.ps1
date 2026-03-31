@@ -46,18 +46,13 @@ function Build-FromSource {
         Write-Error "C++ compiler not found. Please install MinGW-w64 or Clang, and ensure it is in your PATH."
         exit 1
     }
+    $compiler = if ($hasGpp) { "g++" } else { "clang++" }
 
-    $makeCmd = if (Get-Command "make" -ErrorAction SilentlyContinue) { "make" } elseif (Get-Command "mingw32-make" -ErrorAction SilentlyContinue) { "mingw32-make" } else { $null }
-    if (-not $makeCmd) {
-        Write-Error "make utility not found. Please install make (or mingw32-make) and ensure it is in your PATH."
-        exit 1
-    }
+    $isLocal = ((Test-Path "src\main.cpp") -and (Test-Path "Makefile"))
+    $TmpDir = $null
 
-    if ((Test-Path "src\main.cpp") -and (Test-Path "Makefile")) {
+    if ($isLocal) {
         Write-Host "Local source code detected. Building..."
-        Invoke-Expression "$makeCmd all"
-        Move-Item -Path "docgen.exe" -Destination "$InstallDir\docgen.exe" -Force
-        Write-Host "docgen successfully built and installed to $InstallDir\docgen.exe"
     } else {
         Write-Host "Downloading source code..."
         $TmpDir = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.Guid]::NewGuid().ToString())
@@ -75,14 +70,39 @@ function Build-FromSource {
             Expand-Archive -Path "$repo.zip" -DestinationPath "." -Force
             Rename-Item -Path "$repo-master" -NewName $repo
         }
+    }
 
-        Write-Host "Building docgen from source..."
-        Invoke-Expression "$makeCmd all"
+    Write-Host "Compiling docgen and all tree-sitter languages..."
+    $includes = @("-I.", "-Itree-sitter/lib/include")
+    $sources = @("src/main.cpp", "tree-sitter/lib/src/lib.c")
+    
+    $langDirs = @(
+        "tree-sitter-c", "tree-sitter-cpp", "tree-sitter-python", 
+        "tree-sitter-javascript", "tree-sitter-typescript/typescript", 
+        "tree-sitter-go", "tree-sitter-rust"
+    )
+
+    foreach ($dir in $langDirs) {
+        $includes += "-I$dir/src"
+        if (Test-Path "$dir/src/parser.c") { $sources += "$dir/src/parser.c" }
+        if (Test-Path "$dir/src/scanner.c") { $sources += "$dir/src/scanner.c" }
+        if (Test-Path "$dir/src/scanner.cc") { $sources += "$dir/src/scanner.cc" }
+    }
+
+    $buildArgs = @("-std=c++17", "-Wall", "-Wextra", "-O2") + $includes + $sources + @("-o", "docgen.exe")
+    $process = Start-Process -FilePath $compiler -ArgumentList $buildArgs -NoNewWindow -Wait -PassThru
+    
+    if ($process.ExitCode -eq 0 -and (Test-Path "docgen.exe")) {
         Move-Item -Path "docgen.exe" -Destination "$InstallDir\docgen.exe" -Force
-        
+        Write-Host "docgen successfully built and installed to $InstallDir\docgen.exe"
+    } else {
+        Write-Error "Build failed."
+        exit 1
+    }
+
+    if (-not $isLocal -and $TmpDir -and (Test-Path $TmpDir)) {
         Set-Location $env:USERPROFILE
         Remove-Item -Path $TmpDir -Recurse -Force
-        Write-Host "docgen successfully built and installed to $InstallDir\docgen.exe"
     }
 }
 
