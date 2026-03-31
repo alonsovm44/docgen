@@ -46,5 +46,8 @@ $(TS_OBJ): $(TS_SRC)
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) -I$(<D) -c $< -o $@
 
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -I$(<D) -c $< -o $@
+
 clean:
 	rm -f $(DOCGEN_OBJS) $(TS_OBJ) $(LANG_C_OBJS) $(LANG_CXX_OBJS) $(TARGET)

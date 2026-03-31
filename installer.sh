@@ -103,6 +103,7 @@ build_from_source() {
     fi
 
     echo "Building docgen from source..."
+    make clean
     make all
     mv docgen "$INSTALL_DIR/"
     
