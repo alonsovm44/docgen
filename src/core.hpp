@@ -415,6 +415,18 @@ inline bool call_ai(const std::string& filepath, const std::string& content, Inc
     std::string existing_doc;
     if (fs::exists(dest_path)) {
         existing_doc = read_file(dest_path);
+        // Strip existing provenance header so it doesn't get sent to the AI
+        size_t prov_start = existing_doc.find("<!-- docgen-provenance");
+        if (prov_start != std::string::npos) {
+            size_t prov_end = existing_doc.find("-->", prov_start);
+            if (prov_end != std::string::npos) {
+                size_t erase_len = (prov_end + 3) - prov_start;
+                while (prov_start + erase_len < existing_doc.size() && existing_doc[prov_start + erase_len] == '\n') {
+                    erase_len++;
+                }
+                existing_doc.erase(prov_start, erase_len);
+            }
+        }
     }
 
     std::string prompt;
@@ -425,8 +437,11 @@ inline bool call_ai(const std::string& filepath, const std::string& content, Inc
             "Code:\n" + content + style_prompt;
     } else {
         prompt = context_section + 
-            "Update the following documentation based on the new code.\n"
-            "Only modify what has changed in the code. Preserve the existing structure and content where possible.\n"
+            "You are updating an existing documentation file for the provided code.\n"
+            "CRITICAL INSTRUCTIONS:\n"
+            "1. Output the ENTIRE updated Markdown documentation. Do NOT output a patch, diff, or summary.\n"
+            "2. Preserve the exact wording, structure, and tone of the existing documentation as much as possible.\n"
+            "3. Only rewrite or add sections that are directly affected by the changes in the new code.\n\n"
             "Existing Documentation:\n" + existing_doc + "\n\n"
             "New Code:\n" + content + style_prompt;
     }
@@ -434,6 +449,8 @@ inline bool call_ai(const std::string& filepath, const std::string& content, Inc
 
     int max_retries = 5;
     int wait_time = 1;
+
+    std::string active_model_id = mode == "cloud" ? config["cloud"].value("model_id", "unknown") : config["local"].value("model_id", "unknown");
 
     for (int attempt = 0; attempt < max_retries; ++attempt) {
         bool success = false;
@@ -532,6 +549,21 @@ inline bool call_ai(const std::string& filepath, const std::string& content, Inc
         }
 
         if (success) {
+            auto now = std::chrono::system_clock::now();
+            std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+            char time_buf[30];
+            std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%dT%H:%M:%SZ", std::gmtime(&now_c));
+
+            std::string provenance = "<!-- docgen-provenance\n";
+            provenance += "model_id: " + active_model_id + "\n";
+            provenance += "prompt_hash: " + hash_content(prompt) + "\n";
+            provenance += "timestamp: " + std::string(time_buf) + "\n";
+            provenance += "tool_version: docgen v0.2.0\n";
+            provenance += "base_commit: " + get_git_commit() + "\n";
+            provenance += "-->\n\n";
+
+            doc_text = provenance + doc_text;
+
             write_file(dest_path, doc_text);
             out_doc = doc_text;
             std::cout << "Generated: " << dest_path.string() << std::endl;

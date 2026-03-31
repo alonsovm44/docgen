@@ -62,6 +62,30 @@ inline std::string trim(const std::string& str) {
     return str.substr(first, (last - first + 1));
 }
 
+// Get current git commit hash
+inline std::string get_git_commit() {
+    std::string result;
+    std::array<char, 128> buffer;
+#ifdef _WIN32
+    FILE* pipe = _popen("git rev-parse HEAD 2>nul", "r");
+#else
+    FILE* pipe = popen("git rev-parse HEAD 2>/dev/null", "r");
+#endif
+    if (!pipe) {
+        return "unknown";
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+        result += buffer.data();
+    }
+#ifdef _WIN32
+    _pclose(pipe);
+#else
+    pclose(pipe);
+#endif
+    result = trim(result);
+    return result.empty() ? "unknown" : result;
+}
+
 // Execute a shell command and return output. Uses curl for HTTP.
 inline std::string exec_curl(const std::string& url, const std::vector<std::string>& headers, const json& body) {
     // Write body to a temp file to avoid shell escaping hell

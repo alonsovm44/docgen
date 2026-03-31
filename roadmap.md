@@ -44,6 +44,26 @@ Reduce (Synthesis): Combine all the chunk summaries into a single prompt and ask
 
 
 ## For 1.0.0
-Advanced AST skeletonization
+To elevate **docgen** to a professional, enterprise-ready tool suitable for commercial codebases, version 1.0.0 will focus on Security, Reliability, Scalability, and Integration.
 
-Instead of sending the raw code string, you parse the file into an Abstract Syntax Tree (AST). You strip out the implementation bodies of all functions and methods, leaving only the class definitions, function signatures, and docstrings. This reduces a 10,000-line file into a 500-line "skeleton" that still gives the AI 100% of the information it needs to explain what the file does, completely eliminating prompt fatigue.
+### 1. Security & Privacy (Enterprise-Ready)
+- **Environment Variable Keys:** Remove API keys from `docgen_config.json` to prevent accidental credential leaks. Read API keys exclusively from environment variables or global user configurations.
+- **Native HTTP Client:** Replace `popen(curl)` with a native C++ HTTP client (e.g., `cpp-httplib` or `libcurl` directly) to eliminate command injection vulnerabilities and cross-platform brittleness.
+- **Enterprise "Local Only" Enforcement:** Add a hard switch (e.g., `DOCGEN_ENFORCE_LOCAL=1`) to physically prevent the tool from making requests to external cloud providers, ensuring proprietary code never leaves the corporate network.
+
+### 2. Scalability & Performance
+- **Semantic Chunking (AST Parsing):** Instead of sending the raw code string, parse the file into an Abstract Syntax Tree (AST). Strip out the implementation bodies of all functions and methods, leaving only the class definitions, function signatures, and docstrings. This reduces a massive legacy file into a "skeleton" that still gives the AI 100% of the information it needs, completely eliminating prompt fatigue and bypassing the 50KB limit.
+- **Event-Based File Watcher:** Replace the busy-wait `while(true)` polling in `docgen auto` with a native OS file system event watcher (e.g., `efsw`, `fsevents`, `inotify`) to achieve zero CPU usage when idle.
+
+### 3. CI/CD & Workflow Integration
+- **Machine-Readable Output:** Add a `--format json` or `--format sarif` flag to `docgen validate` for native integration with GitHub Advanced Security and GitLab CI dashboards.
+- **Pre-commit Hooks:** Introduce `docgen install-hook` to easily set up a Git pre-commit hook that automatically runs `docgen update` or `docgen validate`.
+- **Concurrency:** Parallelize `cmd_update`. Process independent files concurrently using a thread pool instead of a sequential loop, drastically reducing update times.
+
+### 4. Output Formatting & Standards
+- **Format Adapters:** Ensure generated Markdown is strictly compatible with standard static site generators like MkDocs, Hugo, or Doxygen.
+- **Frontmatter Support:** Inject YAML frontmatter (e.g., `title`, `date`, `author`, `tags`) at the top of generated Markdown files for enterprise wikis and developer portals like Backstage.
+
+### 5. Tool Codebase Health
+- **Unit & Integration Testing:** Introduce a standard C++ testing framework (like Catch2 or GoogleTest).
+- **Refactor `core.hpp`:** Split `core.hpp` into cohesive, maintainable modules (`cli.hpp`, `ai_client.hpp`, `fs_watcher.hpp`, `project_manager.hpp`) to encourage open-source contributions.
