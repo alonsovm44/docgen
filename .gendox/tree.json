@@ -2,57 +2,21 @@
     "files": [
         {
             "dependencies": [
-                "constants.hpp",
-                "utils.hpp",
-                "set",
-                "thread",
-                "chrono",
-                "map",
-                "ctime"
+                "string"
             ],
-            "doc_path": ".docgen/docs/src/core.hpp.md",
-            "hash": "4bb4e9391649449c",
-            "path": "src/core.hpp",
-            "summary": "<!-- docgen-provenance"
+            "doc_path": ".gendox/docs/src/constants.hpp.md",
+            "hash": "f1c649245808d909",
+            "path": "src/constants.hpp",
+            "summary": "<!-- gendox-provenance"
         },
         {
             "dependencies": [
                 "core.hpp"
             ],
-            "doc_path": ".docgen/docs/src/main.cpp.md",
-            "hash": "c4bd5355f0df5d2d",
+            "doc_path": ".gendox/docs/src/main.cpp.md",
+            "hash": "18cba849805720a2",
             "path": "src/main.cpp",
-            "summary": "Here is the updated documentation with **only the sections that changed**, preserving the existing structure and wording exactly where possible and updating only what the new code requires."
-        },
-        {
-            "dependencies": [],
-            "doc_path": ".docgen/docs/CHANGELOG.md.md",
-            "hash": "e8488687c65bf8a6",
-            "path": "CHANGELOG.md",
-            "summary": "This document outlines the intent and functional impact of the changes introduced in versions **v0.0.1 (2026‑03‑06)** and **v0.2.0 (2026‑03‑07)**. It is designed to help maintainers and contributors understand why each change matters, how it affects the workflow, and what behaviors to expect from the updated system."
-        },
-        {
-            "dependencies": [
-                "string"
-            ],
-            "doc_path": ".docgen/docs/src/constants.hpp.md",
-            "hash": "c0eb1895e649bf8a",
-            "path": "src/constants.hpp",
-            "summary": "This file defines several constants used in the DocGen project for managing file paths and configuration."
-        },
-        {
-            "dependencies": [],
-            "doc_path": ".docgen/docs/src/update.ps1.md",
-            "hash": "014ae2448f31f4f6",
-            "path": "src/update.ps1",
-            "summary": "This script automates the process of upgrading the `docgen` executable to its latest version from a GitHub release. It ensures a seamless update by replacing the current executable with the new version while handling potential conflicts."
-        },
-        {
-            "dependencies": [],
-            "doc_path": ".docgen/docs/src/update.sh.md",
-            "hash": "226523d3dd2e5b5c",
-            "path": "src/update.sh",
-            "summary": "```markdown"
+            "summary": "<!-- gendox-provenance"
         },
         {
             "dependencies": [
@@ -76,27 +40,28 @@
                 "Name",
                 "Name"
             ],
-            "doc_path": ".docgen/docs/src/utils.hpp.md",
-            "hash": "d7152ec3367b2a13",
+            "doc_path": ".gendox/docs/src/utils.hpp.md",
+            "hash": "11d6d8a09dc9fa70",
             "path": "src/utils.hpp",
-            "summary": "<!-- docgen-provenance"
-        },
-        {
-            "dependencies": [],
-            "doc_path": ".docgen/docs/installer.ps1.md",
-            "hash": "90a523d0051a6d41",
-            "path": "installer.ps1",
-            "summary": "This PowerShell script automates the installation of the `docgen` tool, preferring prebuilt release assets from GitHub Releases. If no prebuilt asset is available for the platform, it falls back to downloading the source code and provides build instructions. Additionally, the script offers to install Ollama if it is not already installed, as it is highly recommended for local AI processing."
+            "summary": "<!-- gendox-provenance"
         },
         {
             "dependencies": [
-                "manager"
+                "constants.hpp",
+                "utils.hpp",
+                "set",
+                "thread",
+                "chrono",
+                "map",
+                "ctime",
+                "tree_sitter/api.h"
             ],
-            "doc_path": ".docgen/docs/installer.sh.md",
-            "hash": "3055925064cb426c",
-            "path": "installer.sh",
-            "summary": "This script automates the installation of the `docgen` tool by preferring prebuilt release assets from GitHub Releases. If no prebuilt asset is available for the detected OS/architecture, it falls back to downloading and building the source code."
+            "doc_path": ".gendox/docs/src/core.hpp.md",
+            "hash": "069fb051a40b12f5",
+            "path": "src/core.hpp",
+            "summary": "<!-- gendox-provenance"
         }
     ],
-    "last_update": "2026-03-31T03:06:17Z"
+    "last_update": "2026-04-09T02:45:48Z",
+    "project_name": "gendox"
 }

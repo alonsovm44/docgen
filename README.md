@@ -20,14 +20,15 @@ Run `gendox auto` — your documentation evolves with your code in real time, al
 
 ## Try Gendox in 1 Minute (Instant Onboarding)
 
-### 1️⃣ Docker (Recommended)
+### Docker (Recommended)
 No installation required — just clone and run:
 
 ```bash
 git clone https://github.com/alonsovm44/gendox.git
 cd gendox
 docker compose up -d                 # Builds Gendox + Ollama
-docker compose run gendox init       # Initialize project
+docker compose run gendox init       # Initialize project and makes a .gendox doc repo
+                                     # Be sure to fill your Docfile
 docker compose run gendox update     # Generate docs
 ```
 ## Quick Install (recommended):
@@ -42,17 +43,17 @@ curl -fsSL https://raw.githubusercontent.com/alonsovm44/gendox/master/installer.
 For windows
 ```bash
 #download and install
-irm https://raw.githubusercontent.com/alonsovm44/docgen/master/installer.ps1 | iex
+irm https://raw.githubusercontent.com/alonsovm44/gendox/master/installer.ps1 | iex
 ```
 
 ## Interactive chat
 Good for onboarding.
 ```bash
-docgen query "how does auth work in this project?"
+gendox query "how does auth work in this project?"
 # or you can open a chat session
-docgen query --chat
+gendox query --chat
 # or open a project-specific session:
-docgen query --chat --project .  # reads .docgen/docs and project context
+gendox query --chat --project .  # reads .docgen/docs and project context
 ```
 This launches a terminal chat where the AI answers questions about the documented codebase and links back to generated pages.
 
@@ -75,39 +76,6 @@ Style:
     -be concise
 ```
 
-## Common commands (copy-paste)
-- Initialize project:
-  `gendox init`
-
-- Watch for changes, update docs in real time as you work:
- ` gendox auto`
-
-- Query the AI bout the codebase, good for onboarding
-`gendox query "query string"`
-
-- Track files/directories:
-  `gendox track <path>`
-
-- Update docs (generate):
-  `gendox update`
-
-- Check status (like Git status):
-  `gendox status`
-
-- Generate project summary:
- ` gendox summary`
-
-- Dependency graph (DOT):
-  `gendox graph`
-
-- Verify docs are up-to-date (use in CI):
-  `gendox validate`
-
-- Clean deleted/untracked docs:
-  `gendox clean`
-
-- Reset docgen repo (asks confirmation):
-  `gendox reboot`
 
 ## Config & connection
 Run `gendox config` to manage the backend and model:

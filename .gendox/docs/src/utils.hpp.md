@@ -1,231 +1,132 @@
-<!-- docgen-provenance
+<!-- gendox-provenance
 model_id: qwen2.5-coder:7b
-prompt_hash: a39e0b3777177da9
-timestamp: 2026-03-31T01:14:27Z
-tool_version: docgen v0.2.0
-base_commit: b87be9bfdf443ab7b95aba13ea2bf5b56008783a
+prompt_hash: 6d375d776ccd3bc4
+timestamp: 2026-04-09T02:25:31Z
+tool_version: gendox v0.2.0
+base_commit: a870ddfe54e52b4f72367add73f0f05efdc3d102
 -->
 
-# Documentation: Utility Functions for File Processing, Pattern Matching, and Lightweight HTTP Execution
+# File: `utils.hpp`
 
-This module provides a collection of standalone helper functions designed to support lightweight documentation generation, code analysis, and file‑system traversal workflows. The utilities avoid external heavy dependencies and instead rely on standard C++ facilities, `std::filesystem`, and a minimal hashing implementation.
-
-The functions are intentionally simple, stateless, and header‑only, making them suitable for embedding into tooling pipelines or command-line utilities.
-
----
-
-## Table of Contents
-- [Hashing](#hashing)
-- [File Inspection](#file-inspection)
-- [File I/O](#file-io)
-- [String Utilities](#string-utilities)
-- [Git Commit Retrieval](#git-commit-retrieval)
-- [HTTP Execution via Curl](#http-execution-via-curl)
-- [Pattern Matching](#pattern-matching)
-- [Include Extraction](#include-extraction)
+## Overview
+This header file provides utility functions for file handling, string manipulation, hashing, and executing shell commands. It is designed to support various operations such as reading/writing files, trimming strings, computing hashes, and interacting with Git and HTTP services.
 
 ---
 
-## Hashing
+## Functions
 
-### `hash_content(const std::string& content) -> std::string`
-
-Implements a compact FNV‑1a 64‑bit hash and returns it as a zero‑padded hexadecimal string.
-
-**Purpose**
-- Provide a deterministic, dependency‑free content hash.
-- Useful for caching, change detection, or fingerprinting files without relying on OpenSSL or platform‑specific hashing APIs.
-
-**Behavior**
-- Processes bytes exactly as provided (no normalization).
-- Produces a fixed‑width 16‑character hex string.
-- Suitable for non‑cryptographic integrity checks; not intended for security‑sensitive use.
+### 1. **Hash Content**
+```cpp
+inline std::string hash_content(const std::string& content);
+```
+- **Purpose**: Computes a FNV-1a hash of the input string.
+- **Usage**: Use to generate a unique hash for file or string content.
+- **Behavior**: Iterates over each character in the string, updating the hash using the FNV-1a algorithm. Returns the hash as a 16-character hexadecimal string.
 
 ---
 
-## File Inspection
-
-### `is_text_file(const fs::path& path) -> bool`
-
-Heuristically determines whether a file is text‑based.
-
-**Purpose**
-- Avoid processing binary files when scanning source trees.
-- Prevent accidental ingestion of large or non‑UTF‑8 blobs.
-
-**Behavior**
-- Reads up to the first 1024 bytes.
-- Returns `false` if any null byte is encountered.
-- Does not validate encoding; only checks for binary indicators.
-
-**Usage Notes**
-- Works well for typical source files, configuration files, and scripts.
-- Not suitable for distinguishing between different text encodings.
+### 2. **Check if File is Text**
+```cpp
+inline bool is_text_file(const fs::path& path);
+```
+- **Purpose**: Determines if a file is a text file by checking for null bytes.
+- **Usage**: Use to validate file type before processing.
+- **Behavior**: Reads the first 1024 bytes of the file. If any byte is null (`\0`), it returns `false`; otherwise, `true`.
 
 ---
 
-## File I/O
-
-### `read_file(const fs::path& path) -> std::string`
-
-Reads the entire file into memory.
-
-**Purpose**
-- Simplify file ingestion for hashing, parsing, or analysis.
-
-**Behavior**
-- Returns an empty string if the file cannot be opened.
-- Reads in binary mode to preserve exact content.
+### 3. **Read File Content**
+```cpp
+inline std::string read_file(const fs::path& path);
+```
+- **Purpose**: Reads the entire content of a file into a string.
+- **Usage**: Use to load file content for processing.
+- **Behavior**: Opens the file in binary mode and reads its content into a stringstream, returning the result as a string.
 
 ---
 
-### `write_file(const fs::path& path, const std::string& content)`
-
-Writes content to a file, creating parent directories if needed.
-
-**Purpose**
-- Provide a safe, minimal wrapper for writing generated artifacts.
-
-**Behavior**
-- Ensures directory structure exists before writing.
-- Overwrites existing files.
+### 4. **Write File Content**
+```cpp
+inline void write_file(const fs::path& path, const std::string& content);
+```
+- **Purpose**: Writes a string to a file, creating directories if necessary.
+- **Usage**: Use to save processed data to disk.
+- **Behavior**: Creates any missing parent directories and writes the content to the file in binary mode.
 
 ---
 
-## String Utilities
-
-### `trim(const std::string& str) -> std::string`
-
-Removes leading and trailing whitespace.
-
-**Purpose**
-- Normalize user input or parsed tokens.
-- Avoid subtle formatting issues when comparing or hashing strings.
-
-**Behavior**
-- Recognizes spaces, tabs, carriage returns, and newlines.
-- Returns the original string if no trimming is required.
+### 5. **Trim String**
+```cpp
+inline std::string trim(const std::string& str);
+```
+- **Purpose**: Removes leading and trailing whitespace from a string.
+- **Usage**: Use to clean up strings before further processing.
+- **Behavior**: Finds the first and last non-whitespace characters and returns the substring between them.
 
 ---
 
-## Git Commit Retrieval
-
-### `get_git_commit() -> std::string`
-
-Retrieves the current Git commit hash from the repository.
-
-**Purpose**
-- Provide version information for documentation or build artifacts.
-
-**Behavior**
-- Executes `git rev-parse HEAD` in a cross-platform manner.
-- Returns "unknown" if the command fails or no repository is found.
-- Trims whitespace from the result.
-
-**Platform Notes**
-- Uses `_popen` on Windows and `popen` on other systems.
-- Suppresses errors by redirecting stderr to /dev/null (or equivalent).
+### 6. **Get Git Commit Hash**
+```cpp
+inline std::string get_git_commit();
+```
+- **Purpose**: Retrieves the current Git commit hash.
+- **Usage**: Use to version control integration.
+- **Behavior**: Executes `git rev-parse HEAD` and captures the output. Returns "unknown" if the command fails or the output is empty.
 
 ---
 
-## HTTP Execution via Curl
-
-### `exec_curl(const std::string& url, const std::vector<std::string>& headers, const json& body) -> std::string`
-
-Executes a POST request using the system’s `curl` binary.
-
-**Purpose**
-- Provide a lightweight HTTP client without linking to libcurl.
-- Enable communication with remote APIs (e.g., LLM endpoints) from a standalone tool.
-
-**Behavior**
-- Serializes the JSON body to a temporary file to avoid shell‑escaping complexities.
-- Constructs a `curl` command with:
-  - `-s` (silent mode)
-  - `-X POST`
-  - user‑supplied headers
-  - `Content-Type: application/json`
-  - `-d @tempfile`
-- Captures stdout from the curl process.
-- Cleans up the temporary file afterward.
-
-**Usage Considerations**
-- Depends on `curl` being available in the system PATH.
-- Not suitable for high‑performance or streaming HTTP workloads.
-- Error handling is minimal; failures return an empty string.
+### 7. **Execute HTTP Request with Curl**
+```cpp
+inline std::string exec_curl(const std::string& url, const std::vector<std::string>& headers, const json& body);
+```
+- **Purpose**: Sends an HTTP POST request using `curl`.
+- **Usage**: Use for API interactions.
+- **Behavior**: Writes the JSON body to a temporary file, constructs a `curl` command, and executes it. Returns the response or an empty string on failure.
 
 ---
 
-## Pattern Matching
-
-### `match_pattern(const fs::path& path, const std::string& pattern) -> bool`
-
-Matches file paths against simple glob‑like patterns.
-
-**Purpose**
-- Support include/exclude rules when scanning directories.
-- Provide predictable matching without full globbing semantics.
-
-**Supported Patterns**
-- Directory prefix: `"src/"` matches any path beginning with `src/`
-- Extension wildcard: `"*.cpp"` matches files ending in `.cpp`
-- Exact match: `"README.md"`
-
-**Behavior**
-- Normalizes path separators to `/` for cross‑platform consistency.
-- Does not support recursive wildcards, character classes, or complex globbing.
-
-**Changes**
-- Now handles Windows-style `\` path separators by normalizing them to `/`.
+### 8. **Match File Pattern**
+```cpp
+inline bool match_pattern(const fs::path& path, const std::string& pattern);
+```
+- **Purpose**: Checks if a file path matches a given pattern.
+- **Usage**: Use for filtering files based on patterns.
+- **Behavior**: Supports directory matches (e.g., `dir/`), extension matches (e.g., `*.cpp`), and exact matches. Normalizes path separators before comparison.
 
 ---
 
-## Include Extraction
-
-### `extract_includes(const std::string& content) -> std::vector<std::string>`
-
-Extracts import/include statements from source code across multiple languages.
-
-**Purpose**
-- Identify dependencies or referenced modules when generating documentation or analyzing code structure.
-- Provide a unified mechanism for scanning C/C++, Python, Java, Go, and C# import patterns.
-
-**Patterns Detected**
-- C/C++: `#include "file"` or `#include <file>`
-- C‑family: `import something`
-- C#: `using Namespace;`
-- Python: `from module import ...` and `import module`
-- Java: `package name;`
-- Go: `package name`
-
-**Behavior**
-- Uses a single regex capturing multiple language constructs.
-- Returns only the matched module/file name, not the full statement.
-- Scans the entire file content, returning matches in order of appearance.
-
-**Changes**
-- Updated regex to include Go-style `package` statements without semicolons.
-
-**Usage Notes**
-- Designed for broad compatibility rather than strict language parsing.
-- May produce false positives in commented code or strings.
+### 9. **Extract Includes/Imports**
+```cpp
+inline std::vector<std::string> extract_includes(const std::string& content);
+```
+- **Purpose**: Extracts include/import statements from code.
+- **Usage**: Use for dependency analysis.
+- **Behavior**: Uses a regex to match `#include`, `import`, `using`, `from ... import`, and `package` statements in C++, Python, C#, Java, and Go code. Returns a list of matched modules/files.
 
 ---
 
-## Summary
+## Dependencies
+- **C++ Standard Library**: `<iostream>`, `<fstream>`, `<string>`, `<vector>`, `<filesystem>`, `<sstream>`, `<iomanip>`, `<cstdlib>`, `<cstdio>`, `<array>`, `<algorithm>`, `<regex>`.
+- **External**: `nlohmann::json` (for JSON handling).
 
-This header provides a compact toolkit for:
-- hashing content,
-- reading/writing files,
-- identifying text files,
-- retrieving Git commit information,
-- executing simple HTTP POST requests,
-- matching file patterns,
-- extracting import/include dependencies.
+---
 
-Its design favors portability, minimal dependencies, and predictable behavior, making it well‑suited for documentation generators, static analysis tools, and build‑time utilities.
+## Platform Compatibility
+- Supports both Windows and Unix-like systems via conditional compilation (`#ifdef _WIN32`).
 
-**Updates**
-- Added `get_git_commit` function for retrieving Git commit information.
-- Enhanced `match_pattern` to handle Windows-style path separators.
-- Improved `extract_includes` to support Go-style `package` statements.
+---
+
+## Example Usage
+```cpp
+#include "utils.hpp"
+
+int main() {
+    fs::path file_path = "example.txt";
+    std::string content = read_file(file_path);
+    std::string hash = hash_content(content);
+    std::cout << "File hash: " << hash << std::endl;
+    return 0;
+}
+```
+
+This documentation provides a clear overview of the utility functions, their purposes, and how to use them effectively.

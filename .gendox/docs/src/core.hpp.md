@@ -1,300 +1,103 @@
-<!-- docgen-provenance
+<!-- gendox-provenance
 model_id: qwen2.5-coder:7b
-prompt_hash: 7da324d92da600b7
-timestamp: 2026-03-31T01:13:33Z
-tool_version: docgen v0.2.0
-base_commit: b87be9bfdf443ab7b95aba13ea2bf5b56008783a
+prompt_hash: a002f536e683dd50
+timestamp: 2026-04-09T02:45:48Z
+tool_version: gendox v0.2.0
+base_commit: a870ddfe54e52b4f72367add73f0f05efdc3d102
 -->
 
-# `docgen` Command-Line Tool Documentation
+# Documentation for `gendox.hpp`
 
 ## Overview
-The `docgen` tool is a command-line utility designed to automate the generation and maintenance of documentation for software projects. It leverages AI models to create comprehensive Markdown documentation for source code files, tracks changes, and manages project configuration.
+This file provides the core functionality for the Gendox documentation generation tool. It includes commands for initializing projects, managing configuration, generating documentation, and querying existing documentation.
 
----
+## Key Components
 
-## Commands
+### `skeletonize` Function
+- **Purpose**: Reduces source code to a "skeleton" by removing function/method bodies using Tree-sitter parsing.
+- **Supported Languages**: C, C++, Python, JavaScript, TypeScript, Go, Rust.
+- **Behavior**:
+  - Parses code using Tree-sitter to identify function/method bodies.
+  - Replaces bodies with placeholders (e.g., `{ /* implementation hidden */ }`).
+  - Handles different syntax patterns for each language.
+  - Returns original code for unsupported languages.
 
-### `docgen init`
-**Purpose:** Initializes a new documentation repository in the current directory.  
-**Behavior:**
-- Creates a `.docgen` directory and a `Docfile` for configuration.
-- Prompts for a project name.
-- Sets up initial configuration files (`docgen_config.json`, `docgen.lock`, `tree.json`).
-- Creates a `docs` directory for generated documentation.
-- Initializes `docgen_config.json` with default settings for local and cloud AI models.
-- Added support for specifying the API protocol (`simple`, `openai`, `google`) in cloud mode.
-- Includes `ignore_hidden` setting in configuration to exclude hidden files/directories.
+### `cmd_init` Function
+- **Purpose**: Initializes a new Gendox project.
+- **Actions**:
+  - Creates `.gendox` directory structure.
+  - Generates `Docfile` with tracking/ignoring patterns.
+  - Creates initial configuration files (`gendox_config.json`, `gendox.lock`, `tree.json`).
+  - Prompts for project name.
 
-**Example Usage:**
+### `cmd_config` Function
+- **Purpose**: Manages project configuration.
+- **Subcommands**:
+  - `see`: Displays current configuration.
+  - `check`: Tests API connection.
+  - `<key> <value>`: Updates specific configuration keys (mode, protocol, API key, model, ignore-hidden).
+
+### `cmd_update` Function
+- **Purpose**: Updates documentation for tracked files.
+- **Process**:
+  1. Scans files using tracking patterns from `Docfile`.
+  2. Compares file hashes to detect changes.
+  3. Skeletons code and generates documentation using AI.
+  4. Updates metadata in `tree.json` and `gendox.lock`.
+
+### `cmd_auto` Function
+- **Purpose**: Enables auto-update mode.
+- **Behavior**:
+  - Watches tracked files for changes.
+  - Automatically triggers `cmd_update` when changes are detected.
+
+### `cmd_query` Function
+- **Purpose**: Queries project documentation using AI.
+- **Modes**:
+  - Single query mode.
+  - Interactive chat mode (`--chat`).
+- **Context Building**:
+  - Aggregates documentation from `docs/` directory.
+  - Uses Tree-sitter for dependency analysis.
+
+### `cmd_graph` Function
+- **Purpose**: Generates a dependency graph.
+- **Output**:
+  - Creates a Graphviz DOT file (`graph.dot`).
+  - Includes nodes for files and edges for dependencies.
+
+### Utility Functions
+- **`parse_docfile`**: Parses `Docfile` configuration.
+- **`scan_files`**: Scans files based on tracking/ignoring patterns.
+- **`call_ai`**: Handles AI interactions for documentation generation.
+- **`exec_curl`**: Executes HTTP requests using `curl`.
+
+## Usage Examples
 ```bash
-docgen init
+# Initialize project
+gendox init
+
+# Update documentation
+gendox update
+
+# Query documentation
+gendox query "How do I use the Foo class?"
+
+# Enter chat mode
+gendox query --chat
+
+# Generate dependency graph
+gendox graph
 ```
-
----
-
-### `docgen config`
-**Purpose:** Manages the configuration settings for the `docgen` tool.  
-**Behavior:**
-- Allows setting or viewing configuration keys (`mode`, `protocol`, `key`, `model`, `ignore-hidden`).
-- Supports checking the connection to the AI model.
-- Updates specific configuration fields like `cloud.api_key`, `cloud.protocol`, and `model_id` for both local and cloud modes.
-- Includes enhanced error handling for API key issues and rate limits during connection checks.
-- Added support for updating the `protocol` used in cloud mode.
-- Added `ignore-hidden` option to exclude hidden files/directories.
-
-**Usage:**
-- **Set a configuration key:**  
-  ```bash
-  docgen config <key> <value>
-  ```
-  Example:  
-  ```bash
-  docgen config mode cloud
-  docgen config protocol openai
-  docgen config ignore-hidden true
-  ```
-
-- **View current configuration:**  
-  ```bash
-  docgen config see
-  ```
-
-- **Check AI model connection:**  
-  ```bash
-  docgen config check
-  ```
-
----
-
-### `docgen track/ignore`
-**Purpose:** Adds files or patterns to the `Track` or `Ignore` sections of the `Docfile`.  
-**Behavior:**
-- Appends the specified path or pattern to the appropriate section in `Docfile`.
-- Handles comments and pattern syntax consistently.
-
-**Example Usage:**
-```bash
-docgen track src/*.cpp
-docgen ignore tests/*.cpp
-```
-
----
-
-### `docgen update`
-**Purpose:** Updates documentation for tracked files.  
-**Behavior:**
-- Scans tracked files, compares hashes with the lockfile, and generates documentation for changed files.
-- Uses AI to generate Markdown documentation, incorporating context from included files.
-- Updates `tree.json` and `docgen.lock` with new file information.
-- Handles rate limits and retries for cloud AI models.
-- Includes RAG (Retrieval-Augmented Generation) for improved context handling.
-- Added support for updating existing documentation based on code changes.
-- Enhanced error handling for API responses and added verbose mode for debugging.
-- Includes style guidelines from the `Style:` section of `Docfile`.
-- **New:** Preserves existing documentation structure when updating, only modifying changed sections.
-
-**Example Usage:**
-```bash
-docgen update
-```
-
----
-
-### `docgen summary`
-**Purpose:** Generates a summary of the project's documentation.  
-**Behavior:**
-- Reads `tree.json` and creates a `SUMMARY.md` file with file summaries and links to full documentation.
-- Sorts files alphabetically and includes the last update timestamp.
-
-**Example Usage:**
-```bash
-docgen summary
-```
-
----
-
-### `docgen status`
-**Purpose:** Shows the status of tracked files.  
-**Behavior:**
-- Compares file hashes with the lockfile and indicates new or modified files.
-- Uses consistent pattern matching and file hashing.
-
-**Example Usage:**
-```bash
-docgen status
-```
-
----
-
-### `docgen clean`
-**Purpose:** Cleans up outdated documentation files.  
-**Behavior:**
-- Removes documentation for untracked files and updates `tree.json` and `docgen.lock`.
-
-**Example Usage:**
-```bash
-docgen clean
-```
-
----
-
-### `docgen validate`
-**Purpose:** Validates the consistency of documentation.  
-**Behavior:**
-- Checks for untracked files, outdated documentation, and missing files.
-
-**Example Usage:**
-```bash
-docgen validate
-```
-
----
-
-### `docgen upgrade`
-**Purpose:** Checks for and applies updates to the `docgen` tool.  
-**Behavior:**
-- Downloads and executes the update script from the GitHub repository.
-
-**Example Usage:**
-```bash
-docgen upgrade
-```
-
----
-
-### `docgen reboot`
-**Purpose:** Resets the `docgen` repository.  
-**Behavior:**
-- Deletes the `Docfile` and `.docgen` directory after user confirmation.
-
-**Example Usage:**
-```bash
-docgen reboot
-```
-
----
-
-### `docgen sponsor`
-**Purpose:** Opens the GitHub Sponsors page for the project maintainer.  
-**Behavior:**
-- Launches the default browser to the sponsor page.
-
-**Example Usage:**
-```bash
-docgen sponsor
-```
-
----
-
-### `docgen graph`
-**Purpose:** Generates a dependency graph of the project.  
-**Behavior:**
-- Reads `tree.json` and creates a Graphviz DOT file (`graph.dot`) representing file dependencies.
-- Provides instructions for visualizing the graph using the `dot` tool.
-
-**Example Usage:**
-```bash
-docgen graph
-```
-
----
-
-### `docgen query`
-**Purpose:** Queries the project documentation using natural language.  
-**Behavior:**
-- Uses AI to answer questions based on the generated documentation.
-- Aggregates context from all documentation files and sends it to the AI model.
-
-**Example Usage:**
-```bash
-docgen query "How do I initialize the project?"
-```
-
----
-
-### `docgen auto`
-**Purpose:** Automatically updates documentation on file changes.  
-**Behavior:**
-- Monitors tracked files for changes and triggers `docgen update` when modifications are detected.
-
-**Example Usage:**
-```bash
-docgen auto
-```
-
----
-
-## Configuration
-The `docgen` tool uses a JSON configuration file (`docgen_config.json`) to manage settings for AI models and project behavior. Key configuration options include:
-- **Mode:** `local` or `cloud` (determines the AI model endpoint).
-- **API Key:** Required for cloud mode.
-- **Model ID:** Specifies the AI model to use.
-- **Protocol:** Defines the API protocol (e.g., `simple`, `openai`, `google`).
-- **Cloud Settings:** Includes `api_url`, `api_key`, `model_id`, and `protocol`.
-- **Local Settings:** Includes `api_url` and `model_id`.
-- **Ignore Hidden:** Excludes hidden files/directories from tracking (`ignore_hidden`).
-
----
-
-## File Structure
-- **`.docgen/`**: Contains configuration and generated files.
-  - `docgen_config.json`: Configuration settings.
-  - `docgen.lock`: Tracks file hashes for incremental updates.
-  - `tree.json`: Stores metadata about tracked files.
-  - `docs/`: Directory for generated documentation.
-- **`Docfile`**: Defines tracking, ignoring, and styling rules.
-
----
-
-## AI Integration
-The tool integrates with AI models to generate documentation. It supports:
-- **Local Models:** Runs on a local server (e.g., Ollama).
-- **Cloud Models:** Uses remote APIs (e.g., OpenAI, Google).
-- **Contextual Documentation:** Incorporates context from included files to improve documentation accuracy.
-- **Rate Limit Handling:** Retries requests with exponential backoff for cloud models.
-- **RAG (Retrieval-Augmented Generation):** Enhances context handling by including relevant code snippets.
-- **Protocol Support:** Added support for different API protocols (`simple`, `openai`, `google`).
-- **Style Guidelines:** Incorporates style rules from `Docfile` during documentation generation.
-- **New:** Preserves existing documentation structure when updating, only modifying changed sections.
-
----
-
-## Usage Workflow
-1. **Initialize:** Run `docgen init` to set up the repository.
-2. **Configure:** Use `docgen config` to set up AI model settings.
-3. **Track Files:** Add files to `Track` in `Docfile`.
-4. **Generate Docs:** Run `docgen update` to generate documentation.
-5. **Summarize:** Use `docgen summary` to create a project summary.
-6. **Check Status:** Use `docgen status` to view file changes.
-7. **Clean Up:** Use `docgen clean` to remove outdated documentation.
-8. **Validate:** Use `docgen validate` to ensure documentation consistency.
-9. **Visualize Dependencies:** Use `docgen graph` to generate a dependency graph.
-10. **Query Docs:** Use `docgen query` to ask questions about the documentation.
-11. **Auto-Update:** Use `docgen auto` to automatically update documentation on file changes.
-
----
-
-## Error Handling
-- **Configuration Errors:** Clear error messages for missing or invalid configurations.
-- **AI Errors:** Retries on failures and provides detailed error messages.
-- **File Conflicts:** Warns if `.docgen/` or `Docfile` already exists during initialization.
-- **Rate Limits:** Handles API rate limits with retries and backoff.
-- **Validation Errors:** Reports untracked files, outdated documentation, and missing files.
-
----
 
 ## Dependencies
-- **C++ Standard Library:** For file system operations, threading, and JSON handling.
-- **External Tools:** Relies on `curl` for HTTP requests and AI model communication.
+- Tree-sitter for parsing source code.
+- nlohmann/json for JSON handling.
+- Standard C++ filesystem library.
+- `curl` for HTTP requests.
 
----
-
-## Limitations
-- **Prompt Size:** Limited by the AI model's context window (mitigated by truncating context).
-- **File Types:** Only processes text files.
-- **Platform Dependency:** Some commands (e.g., `upgrade`, `sponsor`) use platform-specific commands.
-
----
-
-This documentation provides a comprehensive overview of the `docgen` tool's functionality, usage, and behavior. For further details, refer to the source code and inline comments.
+## Notes
+- Configuration is stored in `.gendox/gendox_config.json`.
+- Documentation is generated in `.gendox/docs/`.
+- Metadata is maintained in `.gendox/tree.json` and `.gendox.lock`.
+- Supports both local and cloud-based AI models.

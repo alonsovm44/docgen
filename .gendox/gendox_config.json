@@ -5,6 +5,7 @@
         "model_id": "qwen2.5-coder:7b",
         "protocol": "simple"
     },
+    "ignore_hidden": false,
     "local": {
         "api_url": "http://localhost:11434/api/generate",
         "model_id": "qwen2.5-coder:3b"
