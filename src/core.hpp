@@ -1344,20 +1344,12 @@ inline void cmd_reboot() {
 
 inline void cmd_sponsor() {
     std::cout << "Opening GitHub Sponsors page..." << std::endl;
+
 #ifdef _WIN32
     system("start https://github.com/sponsors/alonsovm44");
 #elif __APPLE__
     system("open https://github.com/sponsors/alonsovm44");
 #else
     system("xdg-open https://github.com/sponsors/alonsovm44");
-    #endif
-    #else
-    system("xdg-open https://github.com/sponsors/alonsovm44");
-    #endif
-    system("open https://github.com/sponsors/alonsovm44");
-    #else
-    system("xdg-open https://github.com/sponsors/alonsovm44");
-    #endif
-    system("open https://github.com/sponsors/alonsovm44");
-}   
-
+#endif
+}
